@@ -43,7 +43,7 @@ function TestDetail() {
       const sid = localStorage.getItem("session_id") || crypto.randomUUID();
       localStorage.setItem("session_id", sid);
       const res = await start({ data: { test_series_id: test.id, session_id: sid } });
-      navigate({ to: "/tests/$slug/attempt" as any, params: { slug }, search: { a: res.id } as any });
+      navigate({ to: "/tests/$slug/attempt" as any, params: { slug } as any, search: { a: res.id } as any });
     } catch (e: any) {
       toast.error(e.message || "Could not start test");
     } finally {
