@@ -11,9 +11,12 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SubjectsRouteImport } from './routes/subjects'
 import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TestsSlugRouteImport } from './routes/tests.$slug'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as TestsSlugResultRouteImport } from './routes/tests.$slug.result'
+import { Route as TestsSlugAttemptRouteImport } from './routes/tests.$slug.attempt'
 
 const SubjectsRoute = SubjectsRouteImport.update({
   id: '/subjects',
@@ -25,9 +28,8 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminRoute = AdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -40,43 +42,88 @@ const TestsSlugRoute = TestsSlugRouteImport.update({
   path: '/tests/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const TestsSlugResultRoute = TestsSlugResultRouteImport.update({
+  id: '/result',
+  path: '/result',
+  getParentRoute: () => TestsSlugRoute,
+} as any)
+const TestsSlugAttemptRoute = TestsSlugAttemptRouteImport.update({
+  id: '/attempt',
+  path: '/attempt',
+  getParentRoute: () => TestsSlugRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/subjects': typeof SubjectsRoute
-  '/tests/$slug': typeof TestsSlugRoute
+  '/admin': typeof AuthenticatedAdminRoute
+  '/tests/$slug': typeof TestsSlugRouteWithChildren
+  '/tests/$slug/attempt': typeof TestsSlugAttemptRoute
+  '/tests/$slug/result': typeof TestsSlugResultRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/subjects': typeof SubjectsRoute
-  '/tests/$slug': typeof TestsSlugRoute
+  '/admin': typeof AuthenticatedAdminRoute
+  '/tests/$slug': typeof TestsSlugRouteWithChildren
+  '/tests/$slug/attempt': typeof TestsSlugAttemptRoute
+  '/tests/$slug/result': typeof TestsSlugResultRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/subjects': typeof SubjectsRoute
-  '/tests/$slug': typeof TestsSlugRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/tests/$slug': typeof TestsSlugRouteWithChildren
+  '/tests/$slug/attempt': typeof TestsSlugAttemptRoute
+  '/tests/$slug/result': typeof TestsSlugResultRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin' | '/auth' | '/subjects' | '/tests/$slug'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/subjects'
+    | '/admin'
+    | '/tests/$slug'
+    | '/tests/$slug/attempt'
+    | '/tests/$slug/result'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/auth' | '/subjects' | '/tests/$slug'
-  id: '__root__' | '/' | '/admin' | '/auth' | '/subjects' | '/tests/$slug'
+  to:
+    | '/'
+    | '/auth'
+    | '/subjects'
+    | '/admin'
+    | '/tests/$slug'
+    | '/tests/$slug/attempt'
+    | '/tests/$slug/result'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/subjects'
+    | '/_authenticated/admin'
+    | '/tests/$slug'
+    | '/tests/$slug/attempt'
+    | '/tests/$slug/result'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AdminRoute: typeof AdminRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   SubjectsRoute: typeof SubjectsRoute
-  TestsSlugRoute: typeof TestsSlugRoute
+  TestsSlugRoute: typeof TestsSlugRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -95,11 +142,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin': {
-      id: '/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AdminRouteImport
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -116,15 +163,61 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TestsSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/tests/$slug/result': {
+      id: '/tests/$slug/result'
+      path: '/result'
+      fullPath: '/tests/$slug/result'
+      preLoaderRoute: typeof TestsSlugResultRouteImport
+      parentRoute: typeof TestsSlugRoute
+    }
+    '/tests/$slug/attempt': {
+      id: '/tests/$slug/attempt'
+      path: '/attempt'
+      fullPath: '/tests/$slug/attempt'
+      preLoaderRoute: typeof TestsSlugAttemptRouteImport
+      parentRoute: typeof TestsSlugRoute
+    }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
+interface TestsSlugRouteChildren {
+  TestsSlugAttemptRoute: typeof TestsSlugAttemptRoute
+  TestsSlugResultRoute: typeof TestsSlugResultRoute
+}
+
+const TestsSlugRouteChildren: TestsSlugRouteChildren = {
+  TestsSlugAttemptRoute: TestsSlugAttemptRoute,
+  TestsSlugResultRoute: TestsSlugResultRoute,
+}
+
+const TestsSlugRouteWithChildren = TestsSlugRoute._addFileChildren(
+  TestsSlugRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AdminRoute: AdminRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   SubjectsRoute: SubjectsRoute,
-  TestsSlugRoute: TestsSlugRoute,
+  TestsSlugRoute: TestsSlugRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
