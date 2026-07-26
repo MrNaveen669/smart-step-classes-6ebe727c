@@ -15,6 +15,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TestsSlugRouteImport } from './routes/tests.$slug'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as TestsSlugResultRouteImport } from './routes/tests.$slug.result'
 import { Route as TestsSlugAttemptRouteImport } from './routes/tests.$slug.attempt'
 
 const SubjectsRoute = SubjectsRouteImport.update({
@@ -46,6 +47,11 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const TestsSlugResultRoute = TestsSlugResultRouteImport.update({
+  id: '/result',
+  path: '/result',
+  getParentRoute: () => TestsSlugRoute,
+} as any)
 const TestsSlugAttemptRoute = TestsSlugAttemptRouteImport.update({
   id: '/attempt',
   path: '/attempt',
@@ -59,6 +65,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminRoute
   '/tests/$slug': typeof TestsSlugRouteWithChildren
   '/tests/$slug/attempt': typeof TestsSlugAttemptRoute
+  '/tests/$slug/result': typeof TestsSlugResultRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -67,6 +74,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AuthenticatedAdminRoute
   '/tests/$slug': typeof TestsSlugRouteWithChildren
   '/tests/$slug/attempt': typeof TestsSlugAttemptRoute
+  '/tests/$slug/result': typeof TestsSlugResultRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -77,6 +85,7 @@ export interface FileRoutesById {
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/tests/$slug': typeof TestsSlugRouteWithChildren
   '/tests/$slug/attempt': typeof TestsSlugAttemptRoute
+  '/tests/$slug/result': typeof TestsSlugResultRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -87,6 +96,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/tests/$slug'
     | '/tests/$slug/attempt'
+    | '/tests/$slug/result'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -95,6 +105,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/tests/$slug'
     | '/tests/$slug/attempt'
+    | '/tests/$slug/result'
   id:
     | '__root__'
     | '/'
@@ -104,6 +115,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin'
     | '/tests/$slug'
     | '/tests/$slug/attempt'
+    | '/tests/$slug/result'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -158,6 +170,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/tests/$slug/result': {
+      id: '/tests/$slug/result'
+      path: '/result'
+      fullPath: '/tests/$slug/result'
+      preLoaderRoute: typeof TestsSlugResultRouteImport
+      parentRoute: typeof TestsSlugRoute
+    }
     '/tests/$slug/attempt': {
       id: '/tests/$slug/attempt'
       path: '/attempt'
@@ -181,10 +200,12 @@ const AuthenticatedRouteRouteWithChildren =
 
 interface TestsSlugRouteChildren {
   TestsSlugAttemptRoute: typeof TestsSlugAttemptRoute
+  TestsSlugResultRoute: typeof TestsSlugResultRoute
 }
 
 const TestsSlugRouteChildren: TestsSlugRouteChildren = {
   TestsSlugAttemptRoute: TestsSlugAttemptRoute,
+  TestsSlugResultRoute: TestsSlugResultRoute,
 }
 
 const TestsSlugRouteWithChildren = TestsSlugRoute._addFileChildren(

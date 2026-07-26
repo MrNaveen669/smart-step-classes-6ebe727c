@@ -13,8 +13,8 @@ const resQ = (id: string) => queryOptions({ queryKey: ["result", id], queryFn: (
 export const Route = createFileRoute("/tests/$slug/result")({
   head: () => ({ meta: [{ title: "Result — Examly" }, { name: "robots", content: "noindex" }] }),
   validateSearch: z.object({ a: z.string() }),
-  loader: ({ context, deps }) => context.queryClient.ensureQueryData(resQ(deps.a)),
   loaderDeps: ({ search }) => ({ a: search.a }),
+  loader: ({ context, deps }: any) => context.queryClient.ensureQueryData(resQ(deps.a)),
   component: ResultPage,
 });
 
