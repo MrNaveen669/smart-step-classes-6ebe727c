@@ -17,6 +17,7 @@ import { Route as TestsSlugRouteImport } from './routes/tests.$slug'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as TestsSlugResultRouteImport } from './routes/tests.$slug.result'
 import { Route as TestsSlugAttemptRouteImport } from './routes/tests.$slug.attempt'
+import { Route as ApiPublicHooksCleanupBanksRouteImport } from './routes/api/public/hooks/cleanup-banks'
 
 const SubjectsRoute = SubjectsRouteImport.update({
   id: '/subjects',
@@ -57,6 +58,12 @@ const TestsSlugAttemptRoute = TestsSlugAttemptRouteImport.update({
   path: '/attempt',
   getParentRoute: () => TestsSlugRoute,
 } as any)
+const ApiPublicHooksCleanupBanksRoute =
+  ApiPublicHooksCleanupBanksRouteImport.update({
+    id: '/api/public/hooks/cleanup-banks',
+    path: '/api/public/hooks/cleanup-banks',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -66,6 +73,7 @@ export interface FileRoutesByFullPath {
   '/tests/$slug': typeof TestsSlugRouteWithChildren
   '/tests/$slug/attempt': typeof TestsSlugAttemptRoute
   '/tests/$slug/result': typeof TestsSlugResultRoute
+  '/api/public/hooks/cleanup-banks': typeof ApiPublicHooksCleanupBanksRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -75,6 +83,7 @@ export interface FileRoutesByTo {
   '/tests/$slug': typeof TestsSlugRouteWithChildren
   '/tests/$slug/attempt': typeof TestsSlugAttemptRoute
   '/tests/$slug/result': typeof TestsSlugResultRoute
+  '/api/public/hooks/cleanup-banks': typeof ApiPublicHooksCleanupBanksRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -86,6 +95,7 @@ export interface FileRoutesById {
   '/tests/$slug': typeof TestsSlugRouteWithChildren
   '/tests/$slug/attempt': typeof TestsSlugAttemptRoute
   '/tests/$slug/result': typeof TestsSlugResultRoute
+  '/api/public/hooks/cleanup-banks': typeof ApiPublicHooksCleanupBanksRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -97,6 +107,7 @@ export interface FileRouteTypes {
     | '/tests/$slug'
     | '/tests/$slug/attempt'
     | '/tests/$slug/result'
+    | '/api/public/hooks/cleanup-banks'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -106,6 +117,7 @@ export interface FileRouteTypes {
     | '/tests/$slug'
     | '/tests/$slug/attempt'
     | '/tests/$slug/result'
+    | '/api/public/hooks/cleanup-banks'
   id:
     | '__root__'
     | '/'
@@ -116,6 +128,7 @@ export interface FileRouteTypes {
     | '/tests/$slug'
     | '/tests/$slug/attempt'
     | '/tests/$slug/result'
+    | '/api/public/hooks/cleanup-banks'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -124,6 +137,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   SubjectsRoute: typeof SubjectsRoute
   TestsSlugRoute: typeof TestsSlugRouteWithChildren
+  ApiPublicHooksCleanupBanksRoute: typeof ApiPublicHooksCleanupBanksRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -184,6 +198,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TestsSlugAttemptRouteImport
       parentRoute: typeof TestsSlugRoute
     }
+    '/api/public/hooks/cleanup-banks': {
+      id: '/api/public/hooks/cleanup-banks'
+      path: '/api/public/hooks/cleanup-banks'
+      fullPath: '/api/public/hooks/cleanup-banks'
+      preLoaderRoute: typeof ApiPublicHooksCleanupBanksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -218,17 +239,8 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   SubjectsRoute: SubjectsRoute,
   TestsSlugRoute: TestsSlugRouteWithChildren,
+  ApiPublicHooksCleanupBanksRoute: ApiPublicHooksCleanupBanksRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
