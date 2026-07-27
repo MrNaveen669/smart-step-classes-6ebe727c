@@ -74,41 +74,79 @@ export const extractQuestionsFromBank = createServerFn({ method: "POST" })
       for (let i = 0; i < text.length; i += MAX) chunks.push(text.slice(i, i + MAX));
 
       const allQuestions: any[] = [];
-      for (const chunk of chunks) {
-        const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${apiKey}`,
-            "Content-Type": "application/json",
-            "HTTP-Referer": "https://lovable.dev",
-            "X-Title": "Test Series Platform",
-          },
-          body: JSON.stringify({
-            model: "nvidia/nemotron-3-ultra-550b-a55b:free",
-            messages: [
-              { role: "system", content: SYSTEM_PROMPT },
-              { role: "user", content: `Extract questions from this document text:\n\n${chunk}` },
-            ],
-            temperature: 0.1,
-            response_format: { type: "json_object" },
-          }),
-        });
+      const RETRY_DELAYS_MS = [5000, 15000, 30000];
+      const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-        if (res.status === 429) throw new Error("Rate limit hit on the AI provider. Please wait a minute and retry.");
-        if (res.status === 402) throw new Error("AI provider credits exhausted.");
-        if (!res.ok) {
-          const txt = await res.text().catch(() => "");
-          throw new Error(`AI provider error (${res.status}): ${txt.slice(0, 300)}`);
+      for (let ci = 0; ci < chunks.length; ci++) {
+        const chunk = chunks[ci];
+        // Throttle between chunks to avoid burst rate limits
+        if (ci > 0) await sleep(2000);
+
+        let lastErr: Error | null = null;
+        let success = false;
+        for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt++) {
+          const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${apiKey}`,
+              "Content-Type": "application/json",
+              "HTTP-Referer": "https://lovable.dev",
+              "X-Title": "Test Series Platform",
+            },
+            body: JSON.stringify({
+              model: "nvidia/nemotron-3-ultra-550b-a55b:free",
+              messages: [
+                { role: "system", content: SYSTEM_PROMPT },
+                { role: "user", content: `Extract questions from this document text:\n\n${chunk}` },
+              ],
+              temperature: 0.1,
+              response_format: { type: "json_object" },
+            }),
+          });
+
+          if (res.status === 429) {
+            if (attempt < RETRY_DELAYS_MS.length) {
+              await sleep(RETRY_DELAYS_MS[attempt]);
+              continue;
+            }
+            lastErr = new Error("The AI service is busy right now. Please wait a minute and try again.");
+            break;
+          }
+          if (res.status === 402) {
+            lastErr = new Error("AI provider credits exhausted.");
+            break;
+          }
+          if (!res.ok) {
+            const txt = await res.text().catch(() => "");
+            // Retry transient 5xx
+            if (res.status >= 500 && attempt < RETRY_DELAYS_MS.length) {
+              await sleep(RETRY_DELAYS_MS[attempt]);
+              continue;
+            }
+            lastErr = new Error(`AI provider error (${res.status}): ${txt.slice(0, 300)}`);
+            break;
+          }
+          const json: any = await res.json();
+          const content = json?.choices?.[0]?.message?.content ?? "";
+          let parsed: any;
+          try {
+            parsed = safeJson(content);
+          } catch {
+            lastErr = new Error("AI returned malformed JSON. Try re-running extraction.");
+            break;
+          }
+          if (Array.isArray(parsed?.questions)) allQuestions.push(...parsed.questions);
+          success = true;
+          break;
         }
-        const json: any = await res.json();
-        const content = json?.choices?.[0]?.message?.content ?? "";
-        let parsed: any;
-        try {
-          parsed = safeJson(content);
-        } catch {
-          throw new Error("AI returned malformed JSON. Try re-running extraction.");
+
+        if (!success && lastErr) {
+          await context.supabase
+            .from("question_banks")
+            .update({ extraction_status: "failed", extraction_error: lastErr.message.slice(0, 500) })
+            .eq("id", data.bank_id);
+          return { ok: false, count: 0, error: lastErr.message };
         }
-        if (Array.isArray(parsed?.questions)) allQuestions.push(...parsed.questions);
       }
 
       if (!allQuestions.length) {
@@ -150,10 +188,11 @@ export const extractQuestionsFromBank = createServerFn({ method: "POST" })
 
       return { ok: true, count: rows.length };
     } catch (err: any) {
+      const msg = String(err?.message ?? err).slice(0, 500);
       await context.supabase
         .from("question_banks")
-        .update({ extraction_status: "failed", extraction_error: String(err?.message ?? err).slice(0, 500) })
+        .update({ extraction_status: "failed", extraction_error: msg })
         .eq("id", data.bank_id);
-      throw err;
+      return { ok: false, count: 0, error: msg };
     }
   });
