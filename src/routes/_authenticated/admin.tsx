@@ -319,8 +319,15 @@ function BanksTab() {
 
   const runExtract = useMutation({
     mutationFn: (id: string) => extract({ data: { bank_id: id } }),
-    onSuccess: (r: any) => { toast.success(`Extracted ${r.count} questions`); qc.invalidateQueries({ queryKey: ["admin-banks"] }); },
-    onError: (e: any) => toast.error(e.message),
+    onSuccess: (r: any) => {
+      qc.invalidateQueries({ queryKey: ["admin-banks"] });
+      if (r?.ok === false) {
+        toast.error(r.error || "Extraction failed. Please try again.");
+      } else {
+        toast.success(`Extracted ${r.count} questions`);
+      }
+    },
+    onError: (e: any) => toast.error(e?.message || "Extraction failed. Please try again."),
   });
   const remove = useMutation({
     mutationFn: (id: string) => del({ data: { id } }),
@@ -351,8 +358,22 @@ function BanksTab() {
                 </TableCell>
                 <TableCell>{b.question_count ?? 0}</TableCell>
                 <TableCell className="text-right">
-                  <Button size="sm" variant="ghost" disabled={b.extraction_status === "processing" || runExtract.isPending} onClick={() => runExtract.mutate(b.id)}>
-                    <Sparkles className="mr-1 h-3 w-3" />Extract
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    disabled={
+                      b.extraction_status === "processing" ||
+                      runExtract.isPending ||
+                      (runExtract.variables as string | undefined) === b.id
+                    }
+                    onClick={() => runExtract.mutate(b.id)}
+                  >
+                    {runExtract.isPending && (runExtract.variables as string | undefined) === b.id ? (
+                      <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                    ) : (
+                      <Sparkles className="mr-1 h-3 w-3" />
+                    )}
+                    Extract
                   </Button>
                   <Button size="icon" variant="ghost" onClick={() => { if (confirm("Delete bank?")) remove.mutate(b.id); }}><Trash2 className="h-4 w-4" /></Button>
                 </TableCell>
