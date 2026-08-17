@@ -9,19 +9,23 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SubjectsRouteImport } from './routes/subjects'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as TestsSlugRouteImport } from './routes/tests.$slug'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as SubjectsRouteImport } from './routes/subjects'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
-import { Route as TestsSlugResultRouteImport } from './routes/tests.$slug.result'
+import { Route as TestsSlugRouteImport } from './routes/tests.$slug'
 import { Route as TestsSlugAttemptRouteImport } from './routes/tests.$slug.attempt'
+import { Route as TestsSlugResultRouteImport } from './routes/tests.$slug.result'
 import { Route as ApiPublicHooksCleanupBanksRouteImport } from './routes/api/public/hooks/cleanup-banks'
 
-const SubjectsRoute = SubjectsRouteImport.update({
-  id: '/subjects',
-  path: '/subjects',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -29,18 +33,9 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TestsSlugRoute = TestsSlugRouteImport.update({
-  id: '/tests/$slug',
-  path: '/tests/$slug',
+const SubjectsRoute = SubjectsRouteImport.update({
+  id: '/subjects',
+  path: '/subjects',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
@@ -48,14 +43,19 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const TestsSlugResultRoute = TestsSlugResultRouteImport.update({
-  id: '/result',
-  path: '/result',
-  getParentRoute: () => TestsSlugRoute,
+const TestsSlugRoute = TestsSlugRouteImport.update({
+  id: '/tests/$slug',
+  path: '/tests/$slug',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const TestsSlugAttemptRoute = TestsSlugAttemptRouteImport.update({
   id: '/attempt',
   path: '/attempt',
+  getParentRoute: () => TestsSlugRoute,
+} as any)
+const TestsSlugResultRoute = TestsSlugResultRouteImport.update({
+  id: '/result',
+  path: '/result',
   getParentRoute: () => TestsSlugRoute,
 } as any)
 const ApiPublicHooksCleanupBanksRoute =
@@ -142,18 +142,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/subjects': {
-      id: '/subjects'
-      path: '/subjects'
-      fullPath: '/subjects'
-      preLoaderRoute: typeof SubjectsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -163,18 +156,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/tests/$slug': {
-      id: '/tests/$slug'
-      path: '/tests/$slug'
-      fullPath: '/tests/$slug'
-      preLoaderRoute: typeof TestsSlugRouteImport
+    '/subjects': {
+      id: '/subjects'
+      path: '/subjects'
+      fullPath: '/subjects'
+      preLoaderRoute: typeof SubjectsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin': {
@@ -184,18 +177,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/tests/$slug/result': {
-      id: '/tests/$slug/result'
-      path: '/result'
-      fullPath: '/tests/$slug/result'
-      preLoaderRoute: typeof TestsSlugResultRouteImport
-      parentRoute: typeof TestsSlugRoute
+    '/tests/$slug': {
+      id: '/tests/$slug'
+      path: '/tests/$slug'
+      fullPath: '/tests/$slug'
+      preLoaderRoute: typeof TestsSlugRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/tests/$slug/attempt': {
       id: '/tests/$slug/attempt'
       path: '/attempt'
       fullPath: '/tests/$slug/attempt'
       preLoaderRoute: typeof TestsSlugAttemptRouteImport
+      parentRoute: typeof TestsSlugRoute
+    }
+    '/tests/$slug/result': {
+      id: '/tests/$slug/result'
+      path: '/result'
+      fullPath: '/tests/$slug/result'
+      preLoaderRoute: typeof TestsSlugResultRouteImport
       parentRoute: typeof TestsSlugRoute
     }
     '/api/public/hooks/cleanup-banks': {
@@ -244,3 +244,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

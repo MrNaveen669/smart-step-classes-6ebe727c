@@ -30,18 +30,21 @@ export const startAttempt = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const sb = pubClient();
-    const { data: row, error } = await sb
+    // Supply the ID ourselves so starting an attempt only requires INSERT
+    // permission. Chaining `.select().single()` made a successful insert look
+    // like a failure whenever the live SELECT policy was missing or stale.
+    const attemptId = crypto.randomUUID();
+    const { error } = await sb
       .from("test_attempts")
       .insert({
+        id: attemptId,
         test_series_id: data.test_series_id,
         session_id: data.session_id,
         student_name: data.student_name ?? null,
         student_email: data.student_email ?? null,
-      })
-      .select("id, started_at")
-      .single();
+      });
     if (error) throw new Error(error.message);
-    return row;
+    return { id: attemptId };
   });
 
 function isEqualAnswer(a: any, b: any): boolean {
@@ -139,6 +142,7 @@ export const getAttemptResult = createServerFn({ method: "GET" })
       .eq("id", data.attempt_id)
       .single();
     if (error || !attempt) throw new Error(error?.message || "Result not found");
+    if (!attempt.submitted_at) throw new Error("This attempt has not been submitted yet.");
     const { data: qs } = await sb
       .from("test_series_questions")
       .select("sort_order, question:questions(id, question_text, options, correct_answer, explanation, marks, negative_marks, difficulty, image_url)")

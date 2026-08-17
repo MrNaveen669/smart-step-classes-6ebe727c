@@ -24,6 +24,7 @@ function TestDetail() {
   const navigate = useNavigate();
   const start = useServerFn(startAttempt);
   const [busy, setBusy] = useState(false);
+  const [startError, setStartError] = useState<string | null>(null);
 
   if (!data) {
     return (
@@ -39,13 +40,18 @@ function TestDetail() {
 
   async function begin() {
     setBusy(true);
+    setStartError(null);
     try {
       const sid = localStorage.getItem("session_id") || crypto.randomUUID();
       localStorage.setItem("session_id", sid);
       const res = await start({ data: { test_series_id: test.id, session_id: sid } });
-      navigate({ to: "/tests/$slug/attempt" as any, params: { slug } as any, search: { a: res.id } as any });
-    } catch (e: any) {
-      toast.error(e.message || "Could not start test");
+      if (!res?.id) throw new Error("The server did not return an attempt ID.");
+      await navigate({ to: "/tests/$slug/attempt" as any, params: { slug } as any, search: { a: res.id } as any });
+    } catch (error: unknown) {
+      console.error("Could not start test", error);
+      const message = error instanceof Error && error.message ? error.message : "Could not start test. Please try again.";
+      setStartError(message);
+      toast.error(message);
     } finally {
       setBusy(false);
     }
@@ -72,6 +78,7 @@ function TestDetail() {
         <Button onClick={begin} disabled={busy || questions.length === 0} size="lg" className="mt-6 w-full bg-gradient-primary text-primary-foreground shadow-glow">
           {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Start test
         </Button>
+        {startError && <p role="alert" className="mt-2 text-center text-sm text-destructive">{startError}</p>}
         {questions.length === 0 && <p className="mt-2 text-center text-sm text-muted-foreground">This test has no questions yet.</p>}
       </div>
     </div>

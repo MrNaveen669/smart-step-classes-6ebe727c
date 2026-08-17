@@ -53,10 +53,11 @@ export const getPublishedTestBySlug = createServerFn({ method: "GET" })
       .maybeSingle();
     if (error) throw new Error(error.message);
     if (!test) return null;
-    const { data: qs } = await sb
+    const { data: qs, error: questionsError } = await sb
       .from("test_series_questions")
-      .select("sort_order, marks_override, negative_override, question:questions(id, question_text, question_type, options, correct_answer, explanation, difficulty, marks, negative_marks, image_url)")
+      .select("sort_order, marks_override, negative_override, question:questions(id, question_text, question_type, options, difficulty, marks, negative_marks, image_url)")
       .eq("test_series_id", test.id)
       .order("sort_order");
+    if (questionsError) throw new Error(questionsError.message);
     return { test, questions: qs ?? [] };
   });
