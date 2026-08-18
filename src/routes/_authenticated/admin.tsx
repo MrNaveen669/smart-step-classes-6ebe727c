@@ -25,6 +25,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Progress } from "@/components/ui/progress";
 import {
   BarChart3, BookOpen, Layers, FileStack, ListChecks, ClipboardList,
   Plus, Trash2, Pencil, Loader2, LogOut, Sparkles, Upload, RefreshCw, GraduationCap,
@@ -286,6 +287,66 @@ function ChaptersTab() {
 }
 
 // ================= BANKS =================
+function BankExtractionStatus({ bank, locallyProcessing }: { bank: any; locallyProcessing: boolean }) {
+  const processing = bank.extraction_status === "processing" || locallyProcessing;
+  const meta = bank.extraction_meta && typeof bank.extraction_meta === "object" ? bank.extraction_meta : {};
+  const completedChunks = typeof meta.completed_chunks === "number" ? meta.completed_chunks : 0;
+  const totalChunks = typeof meta.total_chunks === "number" ? meta.total_chunks : 0;
+  const progress = typeof meta.progress === "number" ? Math.max(0, Math.min(100, meta.progress)) : null;
+  const extractedCount = typeof meta.extracted_count === "number" ? meta.extracted_count : 0;
+  const ambiguousCount = typeof meta.ambiguous_count === "number" ? meta.ambiguous_count : 0;
+  const localDetectedCount = typeof meta.local_detected_count === "number" ? meta.local_detected_count : 0;
+  const hasRealProgress = processing && meta.phase === "ai_fallback" && totalChunks > 0 && progress !== null;
+  const progressText = meta.phase === "reading"
+    ? "Reading document..."
+    : meta.phase === "parsing_local"
+      ? "Parsing structured questions locally..."
+      : meta.phase === "validating_local"
+        ? `${localDetectedCount} questions detected locally · validating...`
+        : meta.phase === "ai_fallback"
+          ? ambiguousCount > 0
+            ? `Using AI for ${ambiguousCount} ambiguous question${ambiguousCount === 1 ? "" : "s"}...`
+            : "Using AI fallback..."
+          : meta.phase === "saving"
+            ? "Saving extracted questions..."
+            : "Preparing extraction...";
+  const statusLabel = processing
+    ? "Processing"
+    : bank.extraction_status === "pending"
+      ? "Queued"
+      : bank.extraction_status === "completed"
+        ? "Completed"
+        : "Failed";
+
+  return (
+    <div className="min-w-52">
+      <Badge variant={bank.extraction_status === "completed" ? "default" : bank.extraction_status === "failed" ? "destructive" : "secondary"}>
+        {processing && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
+        {statusLabel}
+      </Badge>
+      {processing && (
+        <div className="mt-2 space-y-1.5">
+          <div className="text-xs text-muted-foreground">{progressText}</div>
+          {hasRealProgress ? (
+            <>
+              <Progress value={progress} className="h-1.5" />
+              <div className="flex justify-between text-[11px] text-muted-foreground">
+                <span>Chunk {completedChunks} of {totalChunks}</span>
+                <span>{progress}%{extractedCount > 0 ? ` · ${extractedCount} found` : ""}</span>
+              </div>
+            </>
+          ) : (
+            <div className="h-1.5 overflow-hidden rounded-full bg-primary/20">
+              <div className="h-full w-1/2 animate-pulse rounded-full bg-primary" />
+            </div>
+          )}
+        </div>
+      )}
+      {bank.extraction_error && <div className="mt-1 max-w-xs truncate text-xs text-destructive" title={bank.extraction_error}>{bank.extraction_error}</div>}
+    </div>
+  );
+}
+
 function BanksTab() {
   const qc = useQueryClient();
   const list = useServerFn(adminListBanks);
@@ -295,7 +356,15 @@ function BanksTab() {
   const create = useServerFn(createBank);
   const del = useServerFn(deleteBank);
   const extract = useServerFn(extractQuestionsFromBank);
-  const { data = [], isLoading } = useQuery({ queryKey: ["admin-banks"], queryFn: () => list(), refetchInterval: 5000 });
+  const [activeBankIds, setActiveBankIds] = useState<Set<string>>(() => new Set());
+  const { data = [], isLoading } = useQuery({
+    queryKey: ["admin-banks"],
+    queryFn: () => list(),
+    refetchInterval: (query) => {
+      const banks = query.state.data as any[] | undefined;
+      return activeBankIds.size > 0 || banks?.some((bank) => bank.extraction_status === "processing") ? 2000 : false;
+    },
+  });
   const { data: subjects = [] } = useQuery({ queryKey: ["admin-subjects"], queryFn: () => listSubj() });
   const { data: chapters = [] } = useQuery({ queryKey: ["admin-chapters"], queryFn: () => listCh() });
   const [open, setOpen] = useState(false);
@@ -319,8 +388,19 @@ function BanksTab() {
 
   const runExtract = useMutation({
     mutationFn: (id: string) => extract({ data: { bank_id: id } }),
+    onMutate: async (id) => {
+      setActiveBankIds((current) => new Set(current).add(id));
+      await qc.cancelQueries({ queryKey: ["admin-banks"] });
+      qc.setQueryData<any[]>(["admin-banks"], (banks = []) => banks.map((bank) => bank.id === id
+        ? {
+            ...bank,
+            extraction_status: "processing",
+            extraction_error: null,
+            extraction_meta: { phase: "queued", completed_chunks: 0, total_chunks: 0, progress: null, extracted_count: 0 },
+          }
+        : bank));
+    },
     onSuccess: (r: any) => {
-      qc.invalidateQueries({ queryKey: ["admin-banks"] });
       if (r?.ok === false) {
         toast.error(r.error || "Extraction failed. Please try again.");
       } else {
@@ -328,6 +408,14 @@ function BanksTab() {
       }
     },
     onError: (e: any) => toast.error(e?.message || "Extraction failed. Please try again."),
+    onSettled: (_data, _error, id) => {
+      setActiveBankIds((current) => {
+        const next = new Set(current);
+        next.delete(id);
+        return next;
+      });
+      qc.invalidateQueries({ queryKey: ["admin-banks"] });
+    },
   });
   const remove = useMutation({
     mutationFn: (id: string) => del({ data: { id } }),
@@ -345,40 +433,36 @@ function BanksTab() {
         <Table>
           <TableHeader><TableRow><TableHead>Title</TableHead><TableHead>Subject</TableHead><TableHead>Status</TableHead><TableHead>Questions</TableHead><TableHead className="w-40" /></TableRow></TableHeader>
           <TableBody>
-            {data.map((b: any) => (
-              <TableRow key={b.id}>
-                <TableCell className="font-medium">{b.title}<div className="text-xs text-muted-foreground">{b.file_name}</div></TableCell>
-                <TableCell>{b.subject?.name || "—"}</TableCell>
-                <TableCell>
-                  <Badge variant={b.extraction_status === "completed" ? "default" : b.extraction_status === "failed" ? "destructive" : "secondary"}>
-                    {b.extraction_status === "processing" && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
-                    {b.extraction_status}
-                  </Badge>
-                  {b.extraction_error && <div className="mt-1 max-w-xs truncate text-xs text-destructive" title={b.extraction_error}>{b.extraction_error}</div>}
-                </TableCell>
-                <TableCell>{b.question_count ?? 0}</TableCell>
-                <TableCell className="text-right">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    disabled={
-                      b.extraction_status === "processing" ||
-                      runExtract.isPending ||
-                      (runExtract.variables as string | undefined) === b.id
-                    }
-                    onClick={() => runExtract.mutate(b.id)}
-                  >
-                    {runExtract.isPending && (runExtract.variables as string | undefined) === b.id ? (
-                      <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                    ) : (
-                      <Sparkles className="mr-1 h-3 w-3" />
-                    )}
-                    Extract
-                  </Button>
-                  <Button size="icon" variant="ghost" onClick={() => { if (confirm("Delete bank?")) remove.mutate(b.id); }}><Trash2 className="h-4 w-4" /></Button>
-                </TableCell>
-              </TableRow>
-            ))}
+            {data.map((b: any) => {
+              const locallyProcessing = activeBankIds.has(b.id);
+              const processing = b.extraction_status === "processing" || locallyProcessing;
+              return (
+                <TableRow key={b.id}>
+                  <TableCell className="font-medium">{b.title}<div className="text-xs text-muted-foreground">{b.file_name}</div></TableCell>
+                  <TableCell>{b.subject?.name || "—"}</TableCell>
+                  <TableCell>
+                    <BankExtractionStatus bank={b} locallyProcessing={locallyProcessing} />
+                  </TableCell>
+                  <TableCell>{b.question_count ?? 0}</TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={processing}
+                      onClick={() => runExtract.mutate(b.id)}
+                    >
+                      {processing ? (
+                        <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                      ) : (
+                        <Sparkles className="mr-1 h-3 w-3" />
+                      )}
+                      {processing ? "Processing" : b.extraction_status === "failed" ? "Retry" : b.extraction_status === "completed" ? "Extract again" : "Extract"}
+                    </Button>
+                    <Button size="icon" variant="ghost" disabled={processing} onClick={() => { if (confirm("Delete bank?")) remove.mutate(b.id); }}><Trash2 className="h-4 w-4" /></Button>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
             {data.length === 0 && <TableRow><TableCell colSpan={5} className="text-center text-sm text-muted-foreground">No banks uploaded yet.</TableCell></TableRow>}
           </TableBody>
         </Table>

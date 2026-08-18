@@ -53,8 +53,9 @@ function AttemptPage() {
   async function doSubmit() {
     setSubmitting(true);
     try {
-      const dur = Math.round((Date.now() - startedAt.current) / 1000);
-      await submit({ data: { attempt_id: attemptId, answers, duration_seconds: dur } });
+      const sessionId = localStorage.getItem("session_id");
+      if (!sessionId) throw new Error("This attempt does not belong to this browser session.");
+      await submit({ data: { attempt_id: attemptId, session_id: sessionId, answers } });
       navigate({ to: "/tests/$slug/result" as any, params: { slug } as any, search: { a: attemptId } as any });
     } catch (e: any) { toast.error(e.message); setSubmitting(false); }
   }

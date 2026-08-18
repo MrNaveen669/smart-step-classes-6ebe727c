@@ -1,11 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
+import { realtimeOptionsForCurrentRuntime } from "@/integrations/supabase/realtime-options";
 
 function pubClient() {
   const url = process.env.SUPABASE_URL!;
   const key = process.env.SUPABASE_PUBLISHABLE_KEY!;
   return createClient<Database>(url, key, {
+    realtime: realtimeOptionsForCurrentRuntime(),
     auth: { persistSession: false, autoRefreshToken: false, storage: undefined },
     global: {
       fetch: (input, init) => {
@@ -44,15 +46,19 @@ export const listPublishedTests = createServerFn({ method: "GET" }).handler(asyn
 export const getPublishedTestBySlug = createServerFn({ method: "GET" })
   .inputValidator((input: { slug: string }) => input)
   .handler(async ({ data }) => {
-    const sb = pubClient();
+    // Questions are intentionally not readable by anon at the table level:
+    // they contain correct answers. This server-only client fetches them and
+    // returns an explicit safe projection to the browser.
+    const { supabaseAdmin: sb } = await import("@/integrations/supabase/client.server");
     const { data: test, error } = await sb
       .from("test_series")
-      .select("*, subject:subjects(name, slug), chapter:chapters(name)")
+      .select("id, name, slug, description, subject_id, chapter_id, instructions, duration_minutes, total_marks, passing_marks, negative_marking, negative_mark_value, shuffle_questions, shuffle_options, expiry_date, subject:subjects(name, slug), chapter:chapters(name)")
       .eq("slug", data.slug)
       .eq("status", "published")
       .maybeSingle();
     if (error) throw new Error(error.message);
     if (!test) return null;
+    if (test.expiry_date && new Date(test.expiry_date).getTime() <= Date.now()) return null;
     const { data: qs, error: questionsError } = await sb
       .from("test_series_questions")
       .select("sort_order, marks_override, negative_override, question:questions(id, question_text, question_type, options, difficulty, marks, negative_marks, image_url)")

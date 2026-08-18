@@ -1,22 +1,15 @@
 import { createServerFn } from "@tanstack/react-start";
-import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
-import type { Database } from "@/integrations/supabase/types";
 
-function pubClient() {
-  const url = process.env.SUPABASE_URL!;
-  const key = process.env.SUPABASE_PUBLISHABLE_KEY!;
-  return createClient<Database>(url, key, {
-    auth: { persistSession: false, autoRefreshToken: false, storage: undefined },
-    global: {
-      fetch: (input, init) => {
-        const h = new Headers(init?.headers);
-        if (key.startsWith("sb_") && h.get("Authorization") === `Bearer ${key}`) h.delete("Authorization");
-        h.set("apikey", key);
-        return fetch(input, { ...init, headers: h });
-      },
-    },
-  });
+function logStartAttemptFailure(stage: string, error: unknown) {
+  const maybeError = error as { code?: unknown; message?: unknown; name?: unknown; status?: unknown } | null;
+  const details = {
+    code: maybeError?.code ?? null,
+    message: maybeError?.message ?? (error instanceof Error ? error.message : String(error)),
+    name: maybeError?.name ?? (error instanceof Error ? error.name : null),
+    status: maybeError?.status ?? null,
+  };
+  console.error("[start-attempt] failed", { stage, ...details });
 }
 
 export const startAttempt = createServerFn({ method: "POST" })
@@ -29,22 +22,65 @@ export const startAttempt = createServerFn({ method: "POST" })
     }).parse(d),
   )
   .handler(async ({ data }) => {
-    const sb = pubClient();
-    // Supply the ID ourselves so starting an attempt only requires INSERT
-    // permission. Chaining `.select().single()` made a successful insert look
-    // like a failure whenever the live SELECT policy was missing or stale.
-    const attemptId = crypto.randomUUID();
-    const { error } = await sb
-      .from("test_attempts")
-      .insert({
-        id: attemptId,
-        test_series_id: data.test_series_id,
-        session_id: data.session_id,
-        student_name: data.student_name ?? null,
-        student_email: data.student_email ?? null,
-      });
-    if (error) throw new Error(error.message);
-    return { id: attemptId };
+    console.info("[start-attempt] received", {
+      testSeriesId: data.test_series_id,
+      hasSessionId: Boolean(data.session_id),
+      hasSupabaseUrl: Boolean(process.env.SUPABASE_URL),
+      hasServiceRoleKey: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
+    });
+
+    try {
+      console.info("[start-attempt] creating Supabase server client");
+      const { supabaseAdmin: sb } = await import("@/integrations/supabase/client.server");
+      console.info("[start-attempt] validating test");
+      const { data: test, error: testError } = await sb
+        .from("test_series")
+        .select("id, status, expiry_date")
+        .eq("id", data.test_series_id)
+        .maybeSingle();
+      if (testError) {
+        logStartAttemptFailure("load-test", testError);
+        throw new Error("This test is not available.");
+      }
+      if (!test || test.status !== "published") throw new Error("This test is not available.");
+      if (test.expiry_date && new Date(test.expiry_date).getTime() <= Date.now()) {
+        throw new Error("This test has expired.");
+      }
+
+      const { count, error: questionsError } = await sb
+        .from("test_series_questions")
+        .select("id", { count: "exact", head: true })
+        .eq("test_series_id", test.id);
+      if (questionsError) {
+        logStartAttemptFailure("count-questions", questionsError);
+        throw new Error("Could not verify this test's questions. Please try again.");
+      }
+      if ((count ?? 0) === 0) throw new Error("This test has no questions yet.");
+
+      const attemptId = crypto.randomUUID();
+      console.info("[start-attempt] inserting attempt");
+      const { data: attempt, error: insertError } = await sb
+        .from("test_attempts")
+        .insert({
+          id: attemptId,
+          test_series_id: data.test_series_id,
+          session_id: data.session_id,
+          student_name: data.student_name ?? null,
+          student_email: data.student_email ?? null,
+        })
+        .select("id, started_at")
+        .single();
+      if (insertError || !attempt) {
+        logStartAttemptFailure("insert-attempt", insertError ?? new Error("No attempt returned"));
+        throw new Error("Could not create your test attempt. Please try again.");
+      }
+
+      console.info("[start-attempt] created", { attemptId: attempt.id });
+      return { id: attempt.id, started_at: attempt.started_at };
+    } catch (error) {
+      logStartAttemptFailure("handler", error);
+      throw error;
+    }
   });
 
 function isEqualAnswer(a: any, b: any): boolean {
@@ -62,21 +98,27 @@ export const submitAttempt = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) =>
     z.object({
       attempt_id: z.string(),
+      session_id: z.string().min(6).max(80),
       answers: z.record(z.string(), z.any()),
-      duration_seconds: z.number().min(0).max(60 * 60 * 24),
     }).parse(d),
   )
   .handler(async ({ data }) => {
-    const sb = pubClient();
+    const { supabaseAdmin: sb } = await import("@/integrations/supabase/client.server");
     // Load attempt + test + questions
-    const { data: attempt, error: aErr } = await sb.from("test_attempts").select("*, test:test_series(*)").eq("id", data.attempt_id).single();
+    const { data: attempt, error: aErr } = await sb
+      .from("test_attempts")
+      .select("*, test:test_series(*)")
+      .eq("id", data.attempt_id)
+      .eq("session_id", data.session_id)
+      .single();
     if (aErr || !attempt) throw new Error(aErr?.message || "Attempt not found");
     if (attempt.submitted_at) throw new Error("This attempt was already submitted.");
 
-    const { data: qLinks } = await sb
+    const { data: qLinks, error: questionsError } = await sb
       .from("test_series_questions")
       .select("marks_override, negative_override, question:questions(id, correct_answer, marks, negative_marks)")
       .eq("test_series_id", attempt.test_series_id);
+    if (questionsError) throw new Error(questionsError.message);
 
     let obtained = 0;
     let total = 0;
@@ -110,12 +152,20 @@ export const submitAttempt = createServerFn({ method: "POST" })
     const accuracy = attempted > 0 ? (correct / attempted) * 100 : 0;
     const percentage = total > 0 ? (obtained / total) * 100 : 0;
     const passed = obtained >= Number(test?.passing_marks ?? 0);
+    const startedAt = new Date(attempt.started_at).getTime();
+    const elapsedSeconds = Number.isFinite(startedAt)
+      ? Math.max(0, Math.floor((Date.now() - startedAt) / 1000))
+      : 0;
+    const durationSeconds = Math.min(
+      elapsedSeconds,
+      Math.max(0, Number(test?.duration_minutes ?? 0) * 60),
+    );
 
-    const { error: upErr } = await sb
+    const { data: updated, error: upErr } = await sb
       .from("test_attempts")
       .update({
         submitted_at: new Date().toISOString(),
-        duration_seconds: data.duration_seconds,
+        duration_seconds: durationSeconds,
         answers: data.answers,
         total_marks: total,
         obtained_marks: obtained,
@@ -126,27 +176,36 @@ export const submitAttempt = createServerFn({ method: "POST" })
         accuracy: Math.round(accuracy * 100) / 100,
         passed,
       })
-      .eq("id", data.attempt_id);
+      .eq("id", data.attempt_id)
+      .eq("session_id", data.session_id)
+      .is("submitted_at", null)
+      .select("id")
+      .maybeSingle();
     if (upErr) throw new Error(upErr.message);
+    if (!updated) throw new Error("This attempt was already submitted.");
 
     return { ok: true, obtained, total, correct, wrong, skipped, percentage, accuracy, passed };
   });
 
 export const getAttemptResult = createServerFn({ method: "GET" })
-  .inputValidator((d: unknown) => z.object({ attempt_id: z.string() }).parse(d))
+  .inputValidator((d: unknown) =>
+    z.object({ attempt_id: z.string(), session_id: z.string().min(6).max(80) }).parse(d),
+  )
   .handler(async ({ data }) => {
-    const sb = pubClient();
+    const { supabaseAdmin: sb } = await import("@/integrations/supabase/client.server");
     const { data: attempt, error } = await sb
       .from("test_attempts")
       .select("*, test:test_series(id, name, slug, passing_marks, duration_minutes)")
       .eq("id", data.attempt_id)
+      .eq("session_id", data.session_id)
       .single();
     if (error || !attempt) throw new Error(error?.message || "Result not found");
     if (!attempt.submitted_at) throw new Error("This attempt has not been submitted yet.");
-    const { data: qs } = await sb
+    const { data: qs, error: questionsError } = await sb
       .from("test_series_questions")
       .select("sort_order, question:questions(id, question_text, options, correct_answer, explanation, marks, negative_marks, difficulty, image_url)")
       .eq("test_series_id", attempt.test_series_id)
       .order("sort_order");
+    if (questionsError) throw new Error(questionsError.message);
     return { attempt, questions: qs ?? [] };
   });

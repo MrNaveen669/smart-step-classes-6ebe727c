@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
+import { realtimeOptionsForCurrentRuntime } from "@/integrations/supabase/realtime-options";
 
 // Deletes question-bank uploads (storage file + row) older than 24 hours.
 // Extracted questions in the `questions` table are kept — only the source
@@ -17,6 +18,7 @@ export const Route = createFileRoute("/api/public/hooks/cleanup-banks")({
           );
         }
         const admin = createClient(url, serviceKey, {
+          realtime: realtimeOptionsForCurrentRuntime(),
           auth: { persistSession: false, autoRefreshToken: false },
         });
 

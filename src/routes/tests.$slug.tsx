@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
 import { getPublishedTestBySlug } from "@/lib/queries.functions";
 import { startAttempt } from "@/lib/attempts.functions";
@@ -15,8 +15,20 @@ const testQ = (slug: string) => queryOptions({ queryKey: ["test", slug], queryFn
 export const Route = createFileRoute("/tests/$slug")({
   head: ({ params }) => ({ meta: [{ title: `${params.slug} — Examly` }] }),
   loader: ({ context, params }) => context.queryClient.ensureQueryData(testQ(params.slug)),
-  component: TestDetail,
+  component: TestRoute,
 });
+
+function TestRoute() {
+  const { slug } = Route.useParams();
+  const pathname = useLocation({ select: (location) => location.pathname });
+
+  // `tests.$slug.attempt` and `tests.$slug.result` are child routes. The
+  // parent must render an Outlet for them instead of continuing to render the
+  // introduction page after navigation.
+  if (pathname !== `/tests/${slug}`) return <Outlet />;
+
+  return <TestDetail />;
+}
 
 function TestDetail() {
   const { slug } = Route.useParams();
@@ -39,19 +51,25 @@ function TestDetail() {
   const { test, questions } = data;
 
   async function begin() {
+    console.info("[start-test] clicked", { hasTestId: Boolean(test.id), hasSlug: Boolean(slug) });
     setBusy(true);
     setStartError(null);
     try {
       const sid = localStorage.getItem("session_id") || crypto.randomUUID();
       localStorage.setItem("session_id", sid);
+      console.info("[start-test] session exists", { exists: Boolean(sid) });
+      console.info("[start-test] calling startAttempt");
       const res = await start({ data: { test_series_id: test.id, session_id: sid } });
       if (!res?.id) throw new Error("The server did not return an attempt ID.");
+      console.info("[start-test] received attempt", { hasAttemptId: Boolean(res.id) });
+      console.info("[start-test] navigating to attempt");
       await navigate({ to: "/tests/$slug/attempt" as any, params: { slug } as any, search: { a: res.id } as any });
     } catch (error: unknown) {
       console.error("Could not start test", error);
       const message = error instanceof Error && error.message ? error.message : "Could not start test. Please try again.";
-      setStartError(message);
-      toast.error(message);
+      const visibleMessage = `Unable to start test: ${message}`;
+      setStartError(visibleMessage);
+      toast.error(visibleMessage);
     } finally {
       setBusy(false);
     }
@@ -76,7 +94,7 @@ function TestDetail() {
           </div>
         </Card>
         <Button onClick={begin} disabled={busy || questions.length === 0} size="lg" className="mt-6 w-full bg-gradient-primary text-primary-foreground shadow-glow">
-          {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Start test
+          {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{busy ? "Starting test..." : "Start test"}
         </Button>
         {startError && <p role="alert" className="mt-2 text-center text-sm text-destructive">{startError}</p>}
         {questions.length === 0 && <p className="mt-2 text-center text-sm text-muted-foreground">This test has no questions yet.</p>}

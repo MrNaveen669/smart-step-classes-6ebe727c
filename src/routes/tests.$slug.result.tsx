@@ -8,13 +8,21 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, XCircle, MinusCircle, Trophy, Target, Percent, Clock } from "lucide-react";
 
-const resQ = (id: string) => queryOptions({ queryKey: ["result", id], queryFn: () => getAttemptResult({ data: { attempt_id: id } }) });
+const resQ = (id: string, sessionId: string) => queryOptions({
+  queryKey: ["result", id],
+  queryFn: () => getAttemptResult({ data: { attempt_id: id, session_id: sessionId } }),
+});
 
 export const Route = createFileRoute("/tests/$slug/result")({
+  ssr: false,
   head: () => ({ meta: [{ title: "Result — Examly" }, { name: "robots", content: "noindex" }] }),
   validateSearch: z.object({ a: z.string() }),
   loaderDeps: ({ search }) => ({ a: search.a }),
-  loader: ({ context, deps }: any) => context.queryClient.ensureQueryData(resQ(deps.a)),
+  loader: ({ context, deps }: any) => {
+    const sessionId = localStorage.getItem("session_id");
+    if (!sessionId) throw new Error("This result does not belong to this browser session.");
+    return context.queryClient.ensureQueryData(resQ(deps.a, sessionId));
+  },
   component: ResultPage,
 });
 
@@ -30,7 +38,8 @@ function isEqualAnswer(a: any, b: any): boolean {
 
 function ResultPage() {
   const { a } = Route.useSearch();
-  const { data } = useSuspenseQuery(resQ(a));
+  const sessionId = localStorage.getItem("session_id") ?? "";
+  const { data } = useSuspenseQuery(resQ(a, sessionId));
   const { attempt, questions } = data as any;
   const test = attempt.test;
   const answers = attempt.answers || {};
