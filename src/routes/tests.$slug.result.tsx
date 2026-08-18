@@ -15,7 +15,7 @@ const resQ = (id: string, sessionId: string) => queryOptions({
 
 export const Route = createFileRoute("/tests/$slug/result")({
   ssr: false,
-  head: () => ({ meta: [{ title: "Result — Examly" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Result — Smart Step Classes" }, { name: "robots", content: "noindex" }] }),
   validateSearch: z.object({ a: z.string() }),
   loaderDeps: ({ search }) => ({ a: search.a }),
   loader: ({ context, deps }: any) => {
@@ -67,7 +67,7 @@ function ResultPage() {
           </div>
           <div className="mt-6 grid gap-3 sm:grid-cols-2 md:grid-cols-4">
             {stats.map((s) => (
-              <div key={s.label} className="rounded-lg border border-white/5 bg-white/5 p-4">
+              <div key={s.label} className="rounded-lg border border-border bg-muted/50 p-4">
                 <s.icon className="h-4 w-4 text-primary" />
                 <div className="mt-2 text-xs text-muted-foreground">{s.label}</div>
                 <div className="text-2xl font-bold">{s.value}</div>
@@ -101,7 +101,7 @@ function ResultPage() {
                     {opts.map((o) => {
                       const isCorrect = correctSet.has(o);
                       const isGiven = givenSet.has(o);
-                      let cls = "border-white/10 bg-white/5";
+                      let cls = "border-border bg-muted/50";
                       if (isCorrect) cls = "border-emerald-400/40 bg-emerald-400/10";
                       else if (isGiven) cls = "border-red-400/40 bg-red-400/10";
                       return (

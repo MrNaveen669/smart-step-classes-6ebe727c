@@ -16,7 +16,7 @@ import { toast } from "sonner";
 const testQ = (slug: string) => queryOptions({ queryKey: ["test", slug], queryFn: () => getPublishedTestBySlug({ data: { slug } }) });
 
 export const Route = createFileRoute("/tests/$slug/attempt")({
-  head: () => ({ meta: [{ title: "Attempt — Examly" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Attempt — Smart Step Classes" }, { name: "robots", content: "noindex" }] }),
   validateSearch: z.object({ a: z.string() }),
   loader: ({ context, params }) => context.queryClient.ensureQueryData(testQ(params.slug)),
   component: AttemptPage,
@@ -80,10 +80,10 @@ function AttemptPage() {
 
   return (
     <div className="min-h-screen">
-      <header className="glass sticky top-0 z-30 border-b border-white/5">
+      <header className="glass sticky top-0 z-30 border-b border-border">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-2 px-3 py-3 sm:px-4">
           <div className="min-w-0 flex-1 basis-44"><div className="truncate font-semibold">{test.name}</div><div className="text-xs text-muted-foreground">Question {idx + 1} of {questions.length}</div></div>
-          <div className={`flex shrink-0 items-center gap-2 rounded-lg border border-white/10 px-3 py-1.5 font-mono text-base sm:text-lg ${lowTime ? "border-destructive/50 text-destructive shadow-glow" : ""}`}>
+          <div className={`flex shrink-0 items-center gap-2 rounded-lg border border-border px-3 py-1.5 font-mono text-base sm:text-lg ${lowTime ? "border-destructive/50 text-destructive shadow-glow" : ""}`}>
             <Timer className="h-4 w-4" />{mm}:{ss}
           </div>
           <Button onClick={() => setConfirmOpen(true)} className="shrink-0 bg-gradient-primary text-primary-foreground shadow-glow"><Send className="mr-1 h-4 w-4 sm:mr-2" />Submit</Button>
@@ -101,7 +101,7 @@ function AttemptPage() {
             <div className="mt-6 space-y-2">
               {type === "single_correct" || type === "true_false" || type === "image_based" ? (
                 opts.map((o) => (
-                  <label key={o} className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition ${val === o ? "border-primary bg-primary/10" : "border-white/10 hover:border-white/20 hover:bg-white/5"}`}>
+                  <label key={o} className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition ${val === o ? "border-primary bg-primary/10" : "border-border hover:border-primary/40 hover:bg-muted/50"}`}>
                     <input type="radio" name="q" checked={val === o} onChange={() => setAns(o)} className="h-4 w-4 accent-primary" />
                     <span className="min-w-0 break-words">{o}</span>
                   </label>
@@ -111,7 +111,7 @@ function AttemptPage() {
                   const arr: string[] = Array.isArray(val) ? val : [];
                   const on = arr.includes(o);
                   return (
-                    <label key={o} className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition ${on ? "border-primary bg-primary/10" : "border-white/10 hover:border-white/20 hover:bg-white/5"}`}>
+                    <label key={o} className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition ${on ? "border-primary bg-primary/10" : "border-border hover:border-primary/40 hover:bg-muted/50"}`}>
                       <input type="checkbox" checked={on} onChange={(e) => setAns(e.target.checked ? [...arr, o] : arr.filter((x) => x !== o))} className="h-4 w-4 accent-primary" />
                       <span className="min-w-0 break-words">{o}</span>
                     </label>
@@ -141,7 +141,7 @@ function AttemptPage() {
                 const isFlagged = flagged.has(id);
                 const isVisited = visited.has(id);
                 const isCurrent = i === idx;
-                let cls = "border-white/10 bg-white/5 text-muted-foreground";
+                let cls = "border-border bg-muted/50 text-muted-foreground";
                 if (isAnswered && isFlagged) cls = "border-yellow-400 bg-yellow-400/10 text-yellow-300";
                 else if (isAnswered) cls = "border-emerald-400 bg-emerald-400/10 text-emerald-300";
                 else if (isFlagged) cls = "border-yellow-400 bg-yellow-400/10 text-yellow-300";

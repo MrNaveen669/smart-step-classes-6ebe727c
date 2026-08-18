@@ -10,7 +10,7 @@ const sQ = queryOptions({ queryKey: ["public-subjects"], queryFn: () => listPubl
 const tQ = queryOptions({ queryKey: ["public-tests"], queryFn: () => listPublishedTests() });
 
 export const Route = createFileRoute("/subjects")({
-  head: () => ({ meta: [{ title: "All Subjects — Examly" }, { name: "description", content: "Browse practice tests by subject." }] }),
+  head: () => ({ meta: [{ title: "All Subjects — Smart Step Classes" }, { name: "description", content: "Browse practice tests by subject." }] }),
   loader: ({ context }) => {
     context.queryClient.ensureQueryData(sQ);
     context.queryClient.ensureQueryData(tQ);

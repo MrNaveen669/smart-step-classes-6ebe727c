@@ -1,6 +1,6 @@
-# Examly
+# Smart Step Classes
 
-Examly is a TanStack Start and Supabase application for managing question banks, creating tests, and running anonymous student attempts.
+Smart Step Classes is a TanStack Start and Supabase application for managing question banks, creating tests, and running anonymous student attempts.
 
 ## Local development
 

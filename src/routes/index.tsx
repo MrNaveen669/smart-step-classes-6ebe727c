@@ -16,9 +16,9 @@ const testsQ = queryOptions({ queryKey: ["public-tests"], queryFn: () => listPub
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Examly — AI-Powered Online Test Series" },
+      { title: "Smart Step Classes — AI-Powered Online Test Series" },
       { name: "description", content: "Practice timed mock tests across programming, cyber security, networking, reasoning and English. Instant AI-graded results with explanations." },
-      { property: "og:title", content: "Examly — AI-Powered Online Test Series" },
+      { property: "og:title", content: "Smart Step Classes — AI-Powered Online Test Series" },
       { property: "og:description", content: "Timed practice tests with instant results and detailed answer explanations." },
     ],
   }),
@@ -54,15 +54,15 @@ function Landing() {
             transition={{ duration: 0.6 }}
             className="mx-auto max-w-3xl text-center"
           >
-            <Badge variant="outline" className="glass mb-6 gap-1.5 border-white/10">
+            <Badge variant="outline" className="glass mb-6 gap-1.5 border-border">
               <Sparkles className="h-3 w-3" /> Powered by AI-extracted question banks
             </Badge>
-            <h1 className="text-3xl font-bold tracking-tight sm:text-5xl lg:text-7xl">
+            {/* <h1 className="text-3xl font-bold tracking-tight sm:text-5xl lg:text-7xl">
               Master any exam with <span className="gradient-text">timed practice</span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
               Unlimited mock tests across programming, cyber security, reasoning and more. Real-time results, detailed explanations, and a distraction-free interface built for focus.
-            </p>
+            </p> */}
             <div className="mx-auto mt-8 flex max-w-lg flex-col gap-2 sm:flex-row">
               <div className="relative flex-1">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -146,9 +146,9 @@ function Landing() {
         </div>
       </Section>
 
-      <footer className="mt-24 border-t border-white/5 py-10">
+      <footer className="mt-24 border-t border-border py-10">
         <div className="mx-auto max-w-6xl px-4 text-center text-sm text-muted-foreground">
-          © {new Date().getFullYear()} Examly. Built for focused practice.
+          © {new Date().getFullYear()} Smart Step Classes. Built for focused practice.
         </div>
       </footer>
     </div>

@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { GraduationCap, Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
-  head: () => ({ meta: [{ title: "Admin Sign In — Examly" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Admin Sign In — Smart Step Classes" }, { name: "robots", content: "noindex" }] }),
   component: AuthPage,
 });
 
@@ -60,7 +60,7 @@ function AuthPage() {
           <div className="grid h-9 w-9 place-items-center rounded-lg bg-gradient-primary text-primary-foreground">
             <GraduationCap className="h-5 w-5" />
           </div>
-          <span className="font-bold">Examly Admin</span>
+          <span className="font-bold">Smart Step Classes Admin</span>
         </Link>
         <h1 className="text-2xl font-bold">{isSetup ? "Create first admin" : "Admin sign in"}</h1>
         <p className="mt-1 text-sm text-muted-foreground">

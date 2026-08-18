@@ -15,7 +15,7 @@ import { useState } from "react";
 const testQ = (slug: string) => queryOptions({ queryKey: ["test", slug], queryFn: () => getPublishedTestBySlug({ data: { slug } }) });
 
 export const Route = createFileRoute("/tests/$slug")({
-  head: ({ params }) => ({ meta: [{ title: `${params.slug} — Examly` }] }),
+  head: ({ params }) => ({ meta: [{ title: `${params.slug} — Smart Step Classes` }] }),
   loader: ({ context, params }) => context.queryClient.ensureQueryData(testQ(params.slug)),
   component: TestRoute,
 });

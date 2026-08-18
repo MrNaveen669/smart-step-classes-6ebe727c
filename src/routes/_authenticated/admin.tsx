@@ -26,13 +26,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
+import { ThemeToggle } from "@/components/theme-toggle";
 import {
   BarChart3, BookOpen, Layers, FileStack, ListChecks, ClipboardList,
   Plus, Trash2, Pencil, Loader2, LogOut, Sparkles, Upload, RefreshCw, GraduationCap,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin")({
-  head: () => ({ meta: [{ title: "Admin — Examly" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Admin — Smart Step Classes" }, { name: "robots", content: "noindex" }] }),
   component: AdminPage,
 });
 
@@ -44,13 +45,16 @@ function AdminPage() {
   }
   return (
     <div className="min-h-screen">
-      <header className="glass sticky top-0 z-30 border-b border-white/5">
+      <header className="glass sticky top-0 z-30 border-b border-border">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-3 py-3 sm:px-4">
           <Link to="/" className="min-w-0 flex items-center gap-2">
             <div className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-primary text-primary-foreground"><GraduationCap className="h-4 w-4" /></div>
-            <span className="truncate font-bold">Examly Admin</span>
+            <span className="truncate font-bold">Smart Step Classes Admin</span>
           </Link>
-          <Button variant="ghost" size="sm" onClick={signOut}><LogOut className="mr-2 h-4 w-4" />Sign out</Button>
+          <div className="flex shrink-0 items-center gap-1">
+            <ThemeToggle />
+            <Button variant="ghost" size="sm" className="px-2 sm:px-3" onClick={signOut} aria-label="Sign out"><LogOut className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Sign out</span></Button>
+          </div>
         </div>
       </header>
       <main className="mx-auto max-w-7xl px-3 py-4 sm:px-4 sm:py-8">
@@ -104,7 +108,7 @@ function DashboardTab() {
           <div className="space-y-2">
             {data.recentBanks.length === 0 && <p className="text-sm text-muted-foreground">No banks yet.</p>}
             {data.recentBanks.map((b: any) => (
-              <div key={b.id} className="flex min-w-0 items-center justify-between gap-2 rounded-md border border-white/5 bg-white/5 px-3 py-2 text-sm">
+              <div key={b.id} className="flex min-w-0 items-center justify-between gap-2 rounded-md border border-border bg-muted/50 px-3 py-2 text-sm">
                 <div className="min-w-0 truncate">{b.title}</div>
                 <div className="flex shrink-0 items-center gap-2">
                   <Badge variant={b.extraction_status === "completed" ? "default" : "secondary"}>{b.extraction_status}</Badge>
@@ -119,7 +123,7 @@ function DashboardTab() {
           <div className="space-y-2">
             {data.recentAttempts.length === 0 && <p className="text-sm text-muted-foreground">No attempts yet.</p>}
             {data.recentAttempts.map((a: any) => (
-              <div key={a.id} className="flex min-w-0 items-center justify-between gap-2 rounded-md border border-white/5 bg-white/5 px-3 py-2 text-sm">
+              <div key={a.id} className="flex min-w-0 items-center justify-between gap-2 rounded-md border border-border bg-muted/50 px-3 py-2 text-sm">
                 <div className="min-w-0 truncate">{a.student_name || "Anonymous"}</div>
                 <div className="shrink-0 text-xs text-muted-foreground">{Number(a.obtained_marks ?? 0)} / {Number(a.total_marks ?? 0)}</div>
               </div>
@@ -740,7 +744,7 @@ function TestEditor({ edit, setEdit, save, subjects, listQs }: any) {
             <div className="flex items-center gap-2"><Switch checked={edit.shuffle_questions} onCheckedChange={(c) => setEdit({ ...edit, shuffle_questions: c })} /><Label>Shuffle questions</Label></div>
             <div className="flex items-center gap-2"><Switch checked={edit.shuffle_options} onCheckedChange={(c) => setEdit({ ...edit, shuffle_options: c })} /><Label>Shuffle options</Label></div>
             <div className="flex items-center gap-2"><Switch checked={edit.is_featured} onCheckedChange={(c) => setEdit({ ...edit, is_featured: c })} /><Label>Featured</Label></div>
-            <div className="rounded-lg border border-white/10 p-3">
+            <div className="rounded-lg border border-border p-3">
               <div className="flex items-center gap-2"><Switch checked={!!edit.show_answers_after_submit} onCheckedChange={(c) => setEdit({ ...edit, show_answers_after_submit: c })} /><Label>Show Q&amp;A Review After Submission</Label></div>
               <p className="mt-1 text-xs text-muted-foreground">When enabled, students can review attempted questions, correct answers, and explanations after submitting this test.</p>
             </div>
@@ -753,9 +757,9 @@ function TestEditor({ edit, setEdit, save, subjects, listQs }: any) {
           </div>
           <div className="space-y-2">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"><Label>Questions ({selected.size} · {totalMarks} marks)</Label><Input placeholder="Search…" className="w-full sm:w-40" value={qFilter} onChange={(e) => setQFilter(e.target.value)} /></div>
-            <div className="max-h-[500px] space-y-1 overflow-y-auto rounded-md border border-white/5 p-2">
+            <div className="max-h-[500px] space-y-1 overflow-y-auto rounded-md border border-border p-2">
               {filtered.map((q: any) => (
-                <label key={q.id} className="flex cursor-pointer items-start gap-2 rounded p-2 hover:bg-white/5">
+                <label key={q.id} className="flex cursor-pointer items-start gap-2 rounded p-2 hover:bg-muted/50">
                   <Checkbox className="mt-1" checked={selected.has(q.id)} onCheckedChange={(c) => {
                     const arr = new Set(edit.question_ids || []);
                     c ? arr.add(q.id) : arr.delete(q.id);

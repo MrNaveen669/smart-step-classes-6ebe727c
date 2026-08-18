@@ -10,6 +10,7 @@ import {
 import { type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
+import { ThemeProvider, useTheme } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
@@ -73,9 +74,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Examly — AI-Powered Online Test Series" },
+      { title: "Smart Step Classes — AI-Powered Online Test Series" },
       { name: "description", content: "Practice unlimited timed mock tests across programming, cyber security, reasoning, English and more. Instant results with detailed explanations." },
-      { property: "og:title", content: "Examly — AI-Powered Online Test Series" },
+      { property: "og:title", content: "Smart Step Classes — AI-Powered Online Test Series" },
       { property: "og:description", content: "Practice unlimited timed mock tests across programming, cyber security, reasoning, English and more." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -99,8 +100,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: "try{if(localStorage.getItem('smart-step-classes-theme')==='night')document.documentElement.classList.add('dark')}catch{}" }} />
         <HeadContent />
       </head>
       <body>
@@ -116,9 +118,16 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
-      <Toaster theme="dark" position="top-right" richColors />
+      <ThemeProvider>
+        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+        <Outlet />
+        <AppToaster />
+      </ThemeProvider>
     </QueryClientProvider>
   );
+}
+
+function AppToaster() {
+  const { theme } = useTheme();
+  return <Toaster theme={theme === "night" ? "dark" : "light"} position="top-right" richColors />;
 }
