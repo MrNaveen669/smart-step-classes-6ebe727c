@@ -443,7 +443,7 @@ export const extractQuestionsFromBank = createServerFn({ method: "POST" })
               headers: {
                 Authorization: `Bearer ${apiKey}`,
                 "Content-Type": "application/json",
-                "HTTP-Referer": "https://lovable.dev",
+                "HTTP-Referer": process.env.APP_URL ?? process.env.RENDER_EXTERNAL_URL ?? "http://localhost",
                 "X-Title": "Test Series Platform",
               },
               body: JSON.stringify(buildOpenRouterBody(chunk, strict)),
