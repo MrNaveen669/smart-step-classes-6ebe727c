@@ -233,6 +233,7 @@ const TestInput = z.object({
   question_ids: z.array(z.string()).default([]),
   expiry_date: z.string().nullable().optional(),
   is_featured: z.boolean().default(false),
+  show_answers_after_submit: z.boolean().default(false),
 });
 
 export const upsertTest = createServerFn({ method: "POST" })

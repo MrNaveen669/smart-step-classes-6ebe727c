@@ -45,23 +45,23 @@ function AdminPage() {
   return (
     <div className="min-h-screen">
       <header className="glass sticky top-0 z-30 border-b border-white/5">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
-          <Link to="/" className="flex items-center gap-2">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-3 py-3 sm:px-4">
+          <Link to="/" className="min-w-0 flex items-center gap-2">
             <div className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-primary text-primary-foreground"><GraduationCap className="h-4 w-4" /></div>
-            <span className="font-bold">Examly Admin</span>
+            <span className="truncate font-bold">Examly Admin</span>
           </Link>
           <Button variant="ghost" size="sm" onClick={signOut}><LogOut className="mr-2 h-4 w-4" />Sign out</Button>
         </div>
       </header>
-      <main className="mx-auto max-w-7xl px-4 py-8">
+      <main className="mx-auto max-w-7xl px-3 py-4 sm:px-4 sm:py-8">
         <Tabs value={tab} onValueChange={setTab}>
-          <TabsList className="glass grid w-full grid-cols-6">
-            <TabsTrigger value="dashboard"><BarChart3 className="mr-2 h-4 w-4" />Dashboard</TabsTrigger>
-            <TabsTrigger value="subjects"><BookOpen className="mr-2 h-4 w-4" />Subjects</TabsTrigger>
-            <TabsTrigger value="chapters"><Layers className="mr-2 h-4 w-4" />Chapters</TabsTrigger>
-            <TabsTrigger value="banks"><FileStack className="mr-2 h-4 w-4" />Question Banks</TabsTrigger>
-            <TabsTrigger value="questions"><ListChecks className="mr-2 h-4 w-4" />Questions</TabsTrigger>
-            <TabsTrigger value="tests"><ClipboardList className="mr-2 h-4 w-4" />Tests</TabsTrigger>
+          <TabsList className="glass flex w-full justify-start overflow-x-auto md:grid md:grid-cols-6">
+            <TabsTrigger value="dashboard" className="shrink-0"><BarChart3 className="mr-2 h-4 w-4" />Dashboard</TabsTrigger>
+            <TabsTrigger value="subjects" className="shrink-0"><BookOpen className="mr-2 h-4 w-4" />Subjects</TabsTrigger>
+            <TabsTrigger value="chapters" className="shrink-0"><Layers className="mr-2 h-4 w-4" />Chapters</TabsTrigger>
+            <TabsTrigger value="banks" className="shrink-0"><FileStack className="mr-2 h-4 w-4" />Question Banks</TabsTrigger>
+            <TabsTrigger value="questions" className="shrink-0"><ListChecks className="mr-2 h-4 w-4" />Questions</TabsTrigger>
+            <TabsTrigger value="tests" className="shrink-0"><ClipboardList className="mr-2 h-4 w-4" />Tests</TabsTrigger>
           </TabsList>
           <TabsContent value="dashboard" className="mt-6"><DashboardTab /></TabsContent>
           <TabsContent value="subjects" className="mt-6"><SubjectsTab /></TabsContent>
@@ -99,14 +99,14 @@ function DashboardTab() {
         ))}
       </div>
       <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="glass p-5">
+        <Card className="glass p-4 sm:p-5">
           <h3 className="mb-3 font-semibold">Recent question banks</h3>
           <div className="space-y-2">
             {data.recentBanks.length === 0 && <p className="text-sm text-muted-foreground">No banks yet.</p>}
             {data.recentBanks.map((b: any) => (
-              <div key={b.id} className="flex items-center justify-between rounded-md border border-white/5 bg-white/5 px-3 py-2 text-sm">
-                <div className="truncate">{b.title}</div>
-                <div className="flex items-center gap-2">
+              <div key={b.id} className="flex min-w-0 items-center justify-between gap-2 rounded-md border border-white/5 bg-white/5 px-3 py-2 text-sm">
+                <div className="min-w-0 truncate">{b.title}</div>
+                <div className="flex shrink-0 items-center gap-2">
                   <Badge variant={b.extraction_status === "completed" ? "default" : "secondary"}>{b.extraction_status}</Badge>
                   <span className="text-xs text-muted-foreground">{b.question_count ?? 0} Qs</span>
                 </div>
@@ -114,14 +114,14 @@ function DashboardTab() {
             ))}
           </div>
         </Card>
-        <Card className="glass p-5">
+        <Card className="glass p-4 sm:p-5">
           <h3 className="mb-3 font-semibold">Recent attempts</h3>
           <div className="space-y-2">
             {data.recentAttempts.length === 0 && <p className="text-sm text-muted-foreground">No attempts yet.</p>}
             {data.recentAttempts.map((a: any) => (
-              <div key={a.id} className="flex items-center justify-between rounded-md border border-white/5 bg-white/5 px-3 py-2 text-sm">
-                <div>{a.student_name || "Anonymous"}</div>
-                <div className="text-xs text-muted-foreground">{Number(a.obtained_marks ?? 0)} / {Number(a.total_marks ?? 0)}</div>
+              <div key={a.id} className="flex min-w-0 items-center justify-between gap-2 rounded-md border border-white/5 bg-white/5 px-3 py-2 text-sm">
+                <div className="min-w-0 truncate">{a.student_name || "Anonymous"}</div>
+                <div className="shrink-0 text-xs text-muted-foreground">{Number(a.obtained_marks ?? 0)} / {Number(a.total_marks ?? 0)}</div>
               </div>
             ))}
           </div>
@@ -156,8 +156,8 @@ function SubjectsTab() {
   });
 
   return (
-    <Card className="glass p-5">
-      <div className="mb-4 flex items-center justify-between">
+    <Card className="glass p-4 sm:p-5">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <h3 className="font-semibold">Subjects</h3>
         <Button onClick={() => setEdit({ name: "", description: "", status: "published" })}><Plus className="mr-2 h-4 w-4" />New subject</Button>
       </div>
@@ -187,7 +187,7 @@ function SubjectsTab() {
             <div className="space-y-3">
               <div><Label>Name</Label><Input value={edit.name} onChange={(e) => setEdit({ ...edit, name: e.target.value })} /></div>
               <div><Label>Description</Label><Textarea value={edit.description || ""} onChange={(e) => setEdit({ ...edit, description: e.target.value })} /></div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-3 sm:grid-cols-2">
                 <div><Label>Icon (emoji)</Label><Input value={edit.icon || ""} onChange={(e) => setEdit({ ...edit, icon: e.target.value })} placeholder="📘" /></div>
                 <div><Label>Status</Label>
                   <Select value={edit.status} onValueChange={(v) => setEdit({ ...edit, status: v })}>
@@ -231,8 +231,8 @@ function ChaptersTab() {
   });
 
   return (
-    <Card className="glass p-5">
-      <div className="mb-4 flex items-center justify-between">
+    <Card className="glass p-4 sm:p-5">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <h3 className="font-semibold">Chapters</h3>
         <Button onClick={() => setEdit({ subject_id: subjects[0]?.id, name: "", status: "published" })} disabled={!subjects.length}><Plus className="mr-2 h-4 w-4" />New chapter</Button>
       </div>
@@ -319,7 +319,7 @@ function BankExtractionStatus({ bank, locallyProcessing }: { bank: any; locallyP
         : "Failed";
 
   return (
-    <div className="min-w-52">
+    <div className="min-w-44">
       <Badge variant={bank.extraction_status === "completed" ? "default" : bank.extraction_status === "failed" ? "destructive" : "secondary"}>
         {processing && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
         {statusLabel}
@@ -424,8 +424,8 @@ function BanksTab() {
   });
 
   return (
-    <Card className="glass p-5">
-      <div className="mb-4 flex items-center justify-between">
+    <Card className="glass p-4 sm:p-5">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <h3 className="font-semibold">Question banks</h3>
         <Button onClick={() => setOpen(true)}><Upload className="mr-2 h-4 w-4" />Upload bank</Button>
       </div>
@@ -472,7 +472,7 @@ function BanksTab() {
           <DialogHeader><DialogTitle>Upload question bank</DialogTitle></DialogHeader>
           <div className="space-y-3">
             <div><Label>Title</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-3 sm:grid-cols-2">
               <div><Label>Subject (optional)</Label>
                 <Select value={form.subject_id ?? "none"} onValueChange={(v) => setForm({ ...form, subject_id: v === "none" ? null : v, chapter_id: null })}>
                   <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
@@ -528,16 +528,16 @@ function QuestionsTab() {
   });
 
   return (
-    <Card className="glass p-5">
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <h3 className="mr-auto font-semibold">Questions</h3>
-        <Input placeholder="Search…" className="w-56" value={filters.search || ""} onChange={(e) => setFilters({ ...filters, search: e.target.value || undefined })} />
+    <Card className="glass p-4 sm:p-5">
+      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+        <h3 className="font-semibold sm:mr-auto">Questions</h3>
+        <Input placeholder="Search…" className="w-full sm:w-56" value={filters.search || ""} onChange={(e) => setFilters({ ...filters, search: e.target.value || undefined })} />
         <Select value={filters.subject_id ?? "all"} onValueChange={(v) => setFilters({ ...filters, subject_id: v === "all" ? undefined : v })}>
-          <SelectTrigger className="w-40"><SelectValue placeholder="Subject" /></SelectTrigger>
+          <SelectTrigger className="w-full sm:w-40"><SelectValue placeholder="Subject" /></SelectTrigger>
           <SelectContent><SelectItem value="all">All subjects</SelectItem>{subjects.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
         </Select>
         <Select value={filters.bank_id ?? "all"} onValueChange={(v) => setFilters({ ...filters, bank_id: v === "all" ? undefined : v })}>
-          <SelectTrigger className="w-48"><SelectValue placeholder="Bank" /></SelectTrigger>
+          <SelectTrigger className="w-full sm:w-48"><SelectValue placeholder="Bank" /></SelectTrigger>
           <SelectContent><SelectItem value="all">All banks</SelectItem>{banks.map((b: any) => <SelectItem key={b.id} value={b.id}>{b.title}</SelectItem>)}</SelectContent>
         </Select>
         {sel.size > 0 && <Button variant="destructive" size="sm" onClick={() => { if (confirm(`Delete ${sel.size} questions?`)) remove.mutate([...sel]); }}><Trash2 className="mr-1 h-4 w-4" />Delete {sel.size}</Button>}
@@ -582,7 +582,7 @@ function QuestionEditor({ edit, setEdit, save, subjects }: any) {
           <div><Label>Options</Label>
             <div className="space-y-2">
               {opts.map((o, i) => (
-                <div key={i} className="flex items-center gap-2">
+                <div key={i} className="flex min-w-0 items-center gap-2">
                   <Checkbox checked={Array.isArray(correct) ? correct.includes(o) : correct === o} onCheckedChange={(c) => {
                     if (edit.question_type === "multiple_correct") {
                       const arr = Array.isArray(correct) ? [...correct] : [];
@@ -591,7 +591,7 @@ function QuestionEditor({ edit, setEdit, save, subjects }: any) {
                       setEdit({ ...edit, correct_answer: c ? o : null });
                     }
                   }} />
-                  <Input value={o} onChange={(e) => { const n = [...opts]; n[i] = e.target.value; setEdit({ ...edit, options: n, correct_answer: correct === o ? e.target.value : correct }); }} />
+                  <Input className="min-w-0" value={o} onChange={(e) => { const n = [...opts]; n[i] = e.target.value; setEdit({ ...edit, options: n, correct_answer: correct === o ? e.target.value : correct }); }} />
                   <Button size="icon" variant="ghost" onClick={() => setEdit({ ...edit, options: opts.filter((_, j) => j !== i) })}><Trash2 className="h-4 w-4" /></Button>
                 </div>
               ))}
@@ -599,7 +599,7 @@ function QuestionEditor({ edit, setEdit, save, subjects }: any) {
             </div>
           </div>
           <div><Label>Explanation</Label><Textarea rows={3} value={edit.explanation || ""} onChange={(e) => setEdit({ ...edit, explanation: e.target.value })} /></div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid gap-3 sm:grid-cols-3">
             <div><Label>Difficulty</Label>
               <Select value={edit.difficulty || "medium"} onValueChange={(v) => setEdit({ ...edit, difficulty: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -609,7 +609,7 @@ function QuestionEditor({ edit, setEdit, save, subjects }: any) {
             <div><Label>Marks</Label><Input type="number" min={0} value={Number(edit.marks) || 1} onChange={(e) => setEdit({ ...edit, marks: Number(e.target.value) })} /></div>
             <div><Label>Negative</Label><Input type="number" min={0} step="0.25" value={Number(edit.negative_marks) || 0} onChange={(e) => setEdit({ ...edit, negative_marks: Number(e.target.value) })} /></div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div><Label>Type</Label>
               <Select value={edit.question_type} onValueChange={(v) => setEdit({ ...edit, question_type: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -672,14 +672,14 @@ function TestsTab() {
     const question_ids = t?.id ? await getQs({ data: { test_id: t.id } }) : [];
     setEdit({
       duration_minutes: 30, passing_marks: 0, negative_marking: false, negative_mark_value: 0,
-      shuffle_questions: false, shuffle_options: false, status: "draft", is_featured: false,
+      shuffle_questions: false, shuffle_options: false, status: "draft", is_featured: false, show_answers_after_submit: false,
       ...t, question_ids,
     });
   }
 
   return (
-    <Card className="glass p-5">
-      <div className="mb-4 flex items-center justify-between">
+    <Card className="glass p-4 sm:p-5">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <h3 className="font-semibold">Test series</h3>
         <Button onClick={() => openEdit({ name: "" })}><Plus className="mr-2 h-4 w-4" />New test</Button>
       </div>
@@ -729,17 +729,21 @@ function TestEditor({ edit, setEdit, save, subjects, listQs }: any) {
                 <SelectContent><SelectItem value="none">None</SelectItem>{subjects.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid gap-2 sm:grid-cols-2">
               <div><Label>Duration (min)</Label><Input type="number" min={1} value={edit.duration_minutes} onChange={(e) => setEdit({ ...edit, duration_minutes: Number(e.target.value) })} /></div>
               <div><Label>Passing marks</Label><Input type="number" min={0} value={edit.passing_marks} onChange={(e) => setEdit({ ...edit, passing_marks: Number(e.target.value) })} /></div>
             </div>
             <div><Label>Instructions</Label><Textarea rows={3} value={edit.instructions || ""} onChange={(e) => setEdit({ ...edit, instructions: e.target.value })} /></div>
-            <div className="flex items-center gap-2"><Switch checked={edit.negative_marking} onCheckedChange={(c) => setEdit({ ...edit, negative_marking: c })} /><Label>Negative marking</Label>
-              {edit.negative_marking && <Input type="number" min={0} step="0.25" className="ml-2 w-24" value={edit.negative_mark_value} onChange={(e) => setEdit({ ...edit, negative_mark_value: Number(e.target.value) })} />}
+            <div className="flex flex-wrap items-center gap-2"><Switch checked={edit.negative_marking} onCheckedChange={(c) => setEdit({ ...edit, negative_marking: c })} /><Label>Negative marking</Label>
+              {edit.negative_marking && <Input type="number" min={0} step="0.25" className="w-24" value={edit.negative_mark_value} onChange={(e) => setEdit({ ...edit, negative_mark_value: Number(e.target.value) })} />}
             </div>
             <div className="flex items-center gap-2"><Switch checked={edit.shuffle_questions} onCheckedChange={(c) => setEdit({ ...edit, shuffle_questions: c })} /><Label>Shuffle questions</Label></div>
             <div className="flex items-center gap-2"><Switch checked={edit.shuffle_options} onCheckedChange={(c) => setEdit({ ...edit, shuffle_options: c })} /><Label>Shuffle options</Label></div>
             <div className="flex items-center gap-2"><Switch checked={edit.is_featured} onCheckedChange={(c) => setEdit({ ...edit, is_featured: c })} /><Label>Featured</Label></div>
+            <div className="rounded-lg border border-white/10 p-3">
+              <div className="flex items-center gap-2"><Switch checked={!!edit.show_answers_after_submit} onCheckedChange={(c) => setEdit({ ...edit, show_answers_after_submit: c })} /><Label>Show Q&amp;A Review After Submission</Label></div>
+              <p className="mt-1 text-xs text-muted-foreground">When enabled, students can review attempted questions, correct answers, and explanations after submitting this test.</p>
+            </div>
             <div><Label>Status</Label>
               <Select value={edit.status} onValueChange={(v) => setEdit({ ...edit, status: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -748,7 +752,7 @@ function TestEditor({ edit, setEdit, save, subjects, listQs }: any) {
             </div>
           </div>
           <div className="space-y-2">
-            <div className="flex items-center justify-between"><Label>Questions ({selected.size} · {totalMarks} marks)</Label><Input placeholder="Search…" className="w-40" value={qFilter} onChange={(e) => setQFilter(e.target.value)} /></div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"><Label>Questions ({selected.size} · {totalMarks} marks)</Label><Input placeholder="Search…" className="w-full sm:w-40" value={qFilter} onChange={(e) => setQFilter(e.target.value)} /></div>
             <div className="max-h-[500px] space-y-1 overflow-y-auto rounded-md border border-white/5 p-2">
               {filtered.map((q: any) => (
                 <label key={q.id} className="flex cursor-pointer items-start gap-2 rounded p-2 hover:bg-white/5">

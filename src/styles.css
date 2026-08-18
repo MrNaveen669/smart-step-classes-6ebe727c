@@ -114,10 +114,15 @@
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
     min-height: 100vh;
+    max-width: 100%;
+    overflow-x: hidden;
   }
   body {
     background-image: var(--gradient-mesh);
     background-attachment: fixed;
+  }
+  img, svg, video, canvas {
+    max-width: 100%;
   }
 }
 

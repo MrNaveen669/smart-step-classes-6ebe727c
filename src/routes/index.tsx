@@ -47,7 +47,7 @@ function Landing() {
       {/* HERO */}
       <section className="relative overflow-hidden">
         <div className="pointer-events-none absolute inset-0 bg-gradient-glow opacity-70" />
-        <div className="relative mx-auto max-w-6xl px-4 pt-20 pb-16 sm:pt-28 sm:pb-24">
+        <div className="relative mx-auto max-w-6xl px-4 pb-14 pt-14 sm:pb-24 sm:pt-28">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -57,13 +57,13 @@ function Landing() {
             <Badge variant="outline" className="glass mb-6 gap-1.5 border-white/10">
               <Sparkles className="h-3 w-3" /> Powered by AI-extracted question banks
             </Badge>
-            <h1 className="text-5xl font-bold tracking-tight sm:text-7xl">
+            <h1 className="text-3xl font-bold tracking-tight sm:text-5xl lg:text-7xl">
               Master any exam with <span className="gradient-text">timed practice</span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
               Unlimited mock tests across programming, cyber security, reasoning and more. Real-time results, detailed explanations, and a distraction-free interface built for focus.
             </p>
-            <div className="mx-auto mt-8 flex max-w-lg items-center gap-2">
+            <div className="mx-auto mt-8 flex max-w-lg flex-col gap-2 sm:flex-row">
               <div className="relative flex-1">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
@@ -73,13 +73,13 @@ function Landing() {
                   className="glass h-12 pl-9 text-base"
                 />
               </div>
-              <Button asChild size="lg" className="bg-gradient-primary text-primary-foreground shadow-glow">
+              <Button asChild size="lg" className="w-full bg-gradient-primary text-primary-foreground shadow-glow sm:w-auto">
                 <Link to="/subjects">
                   Browse <ArrowRight className="ml-1 h-4 w-4" />
                 </Link>
               </Button>
             </div>
-            <div className="mx-auto mt-10 grid max-w-2xl grid-cols-3 gap-4 text-sm">
+            <div className="mx-auto mt-10 grid max-w-2xl gap-4 text-sm sm:grid-cols-3">
               <Stat icon={<BookOpen className="h-4 w-4" />} label="Subjects" value={subjects.length} />
               <Stat icon={<Timer className="h-4 w-4" />} label="Tests" value={tests.length} />
               <Stat icon={<Brain className="h-4 w-4" />} label="AI-Graded" value="100%" />

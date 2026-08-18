@@ -55,7 +55,7 @@ function AuthPage() {
 
   return (
     <div className="grid min-h-screen place-items-center px-4">
-      <Card className="glass w-full max-w-md p-8 shadow-card">
+      <Card className="glass w-full max-w-md p-5 shadow-card sm:p-8">
         <Link to="/" className="mb-8 flex items-center gap-2">
           <div className="grid h-9 w-9 place-items-center rounded-lg bg-gradient-primary text-primary-foreground">
             <GraduationCap className="h-5 w-5" />

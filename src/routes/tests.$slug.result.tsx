@@ -6,7 +6,7 @@ import { SiteHeader } from "@/components/site-header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, XCircle, MinusCircle, Trophy, Target, Percent, Clock } from "lucide-react";
+import { CheckCircle2, XCircle, MinusCircle, Trophy, ListChecks, Percent } from "lucide-react";
 
 const resQ = (id: string, sessionId: string) => queryOptions({
   queryKey: ["result", id],
@@ -40,34 +40,32 @@ function ResultPage() {
   const { a } = Route.useSearch();
   const sessionId = localStorage.getItem("session_id") ?? "";
   const { data } = useSuspenseQuery(resQ(a, sessionId));
-  const { attempt, questions } = data as any;
+  const { attempt, show_answers_after_submit, review } = data as any;
   const test = attempt.test;
-  const answers = attempt.answers || {};
-  const dur = attempt.duration_seconds || 0;
-  const mm = Math.floor(dur / 60);
-  const ss = dur % 60;
+  const answers = review?.answers || {};
+  const questions = review?.questions || [];
 
   const stats = [
     { icon: Trophy, label: "Score", value: `${Number(attempt.obtained_marks ?? 0)} / ${Number(attempt.total_marks ?? 0)}` },
+    { icon: ListChecks, label: "Attempted Questions", value: String(attempt.attempted_questions ?? 0) },
+    { icon: MinusCircle, label: "Skipped Questions", value: String(attempt.skipped_count ?? 0) },
     { icon: Percent, label: "Percentage", value: `${Number(attempt.percentage ?? 0).toFixed(1)}%` },
-    { icon: Target, label: "Accuracy", value: `${Number(attempt.accuracy ?? 0).toFixed(1)}%` },
-    { icon: Clock, label: "Time", value: `${mm}m ${ss}s` },
   ];
 
   return (
     <div className="min-h-screen">
       <SiteHeader />
-      <div className="mx-auto max-w-4xl px-4 py-10">
-        <Card className={`glass overflow-hidden p-8 ${attempt.passed ? "shadow-glow" : ""}`}>
+      <div className="mx-auto max-w-4xl px-3 py-6 sm:px-4 sm:py-10">
+        <Card className={`glass overflow-hidden p-4 sm:p-8 ${attempt.passed ? "shadow-glow" : ""}`}>
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <div className="text-sm text-muted-foreground">{test?.name}</div>
-              <h1 className="mt-1 text-4xl font-bold gradient-text">{attempt.passed ? "Passed 🎉" : "Better luck next time"}</h1>
+              <h1 className="mt-1 text-3xl font-bold gradient-text sm:text-4xl">{attempt.passed ? "Passed 🎉" : "Better luck next time"}</h1>
               <p className="mt-1 text-sm text-muted-foreground">Passing marks: {Number(test?.passing_marks ?? 0)}</p>
             </div>
             <Button asChild variant="outline"><Link to="/">Back to tests</Link></Button>
           </div>
-          <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
+          <div className="mt-6 grid gap-3 sm:grid-cols-2 md:grid-cols-4">
             {stats.map((s) => (
               <div key={s.label} className="rounded-lg border border-white/5 bg-white/5 p-4">
                 <s.icon className="h-4 w-4 text-primary" />
@@ -76,14 +74,9 @@ function ResultPage() {
               </div>
             ))}
           </div>
-          <div className="mt-6 grid grid-cols-3 gap-3 text-center text-sm">
-            <div className="rounded-lg border border-emerald-400/20 bg-emerald-400/5 p-3"><div className="text-2xl font-bold text-emerald-400">{attempt.correct_count ?? 0}</div><div className="text-xs text-muted-foreground">Correct</div></div>
-            <div className="rounded-lg border border-red-400/20 bg-red-400/5 p-3"><div className="text-2xl font-bold text-red-400">{attempt.wrong_count ?? 0}</div><div className="text-xs text-muted-foreground">Wrong</div></div>
-            <div className="rounded-lg border border-white/10 p-3"><div className="text-2xl font-bold text-muted-foreground">{attempt.skipped_count ?? 0}</div><div className="text-xs text-muted-foreground">Skipped</div></div>
-          </div>
         </Card>
 
-        <h2 className="mb-3 mt-10 text-xl font-bold">Solutions</h2>
+        {show_answers_after_submit && <><h2 className="mb-3 mt-10 text-xl font-bold">Q&amp;A Review</h2>
         <div className="space-y-3">
           {questions.map((row: any, i: number) => {
             const q = row.question;
@@ -94,7 +87,7 @@ function ResultPage() {
             const givenSet = new Set<string>(Array.isArray(given) ? given.map(String) : given != null && given !== "" ? [String(given)] : []);
             const status = givenSet.size === 0 ? "skipped" : gotIt ? "correct" : "wrong";
             return (
-              <Card key={q.id} className="glass p-5">
+              <Card key={q.id} className="glass min-w-0 p-4 sm:p-5">
                 <div className="mb-3 flex items-center gap-2">
                   <Badge variant="outline">Q{i + 1}</Badge>
                   {status === "correct" && <Badge className="bg-emerald-500/20 text-emerald-300"><CheckCircle2 className="mr-1 h-3 w-3" />Correct</Badge>}
@@ -102,7 +95,7 @@ function ResultPage() {
                   {status === "skipped" && <Badge variant="secondary"><MinusCircle className="mr-1 h-3 w-3" />Skipped</Badge>}
                   <Badge variant="secondary">{Number(q.marks)}m</Badge>
                 </div>
-                <p className="whitespace-pre-wrap">{q.question_text}</p>
+                <p className="whitespace-pre-wrap break-words">{q.question_text}</p>
                 {opts.length > 0 && (
                   <div className="mt-3 space-y-1.5">
                     {opts.map((o) => {
@@ -113,7 +106,7 @@ function ResultPage() {
                       else if (isGiven) cls = "border-red-400/40 bg-red-400/10";
                       return (
                         <div key={o} className={`flex items-center justify-between rounded-md border p-2.5 text-sm ${cls}`}>
-                          <span>{o}</span>
+                          <span className="min-w-0 break-words">{o}</span>
                           <span className="text-xs">
                             {isCorrect && <span className="text-emerald-400">Correct answer</span>}
                             {isGiven && !isCorrect && <span className="text-red-400">Your answer</span>}
@@ -138,7 +131,7 @@ function ResultPage() {
               </Card>
             );
           })}
-        </div>
+        </div></>}
       </div>
     </div>
   );

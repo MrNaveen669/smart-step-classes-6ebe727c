@@ -17,22 +17,13 @@ export const startAttempt = createServerFn({ method: "POST" })
     z.object({
       test_series_id: z.string(),
       session_id: z.string().min(6).max(80),
-      student_name: z.string().max(80).optional().nullable(),
-      student_email: z.string().email().max(200).optional().nullable(),
+      student_name: z.string().trim().min(2, "Please enter your name.").max(80).refine((value) => (value.match(/[\p{L}\p{N}]/gu)?.length ?? 0) >= 2, "Please enter your name."),
+      student_email: z.string().trim().toLowerCase().email("Please enter a valid email address.").max(200),
     }).parse(d),
   )
   .handler(async ({ data }) => {
-    console.info("[start-attempt] received", {
-      testSeriesId: data.test_series_id,
-      hasSessionId: Boolean(data.session_id),
-      hasSupabaseUrl: Boolean(process.env.SUPABASE_URL),
-      hasServiceRoleKey: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
-    });
-
     try {
-      console.info("[start-attempt] creating Supabase server client");
       const { supabaseAdmin: sb } = await import("@/integrations/supabase/client.server");
-      console.info("[start-attempt] validating test");
       const { data: test, error: testError } = await sb
         .from("test_series")
         .select("id, status, expiry_date")
@@ -58,15 +49,14 @@ export const startAttempt = createServerFn({ method: "POST" })
       if ((count ?? 0) === 0) throw new Error("This test has no questions yet.");
 
       const attemptId = crypto.randomUUID();
-      console.info("[start-attempt] inserting attempt");
       const { data: attempt, error: insertError } = await sb
         .from("test_attempts")
         .insert({
           id: attemptId,
           test_series_id: data.test_series_id,
           session_id: data.session_id,
-          student_name: data.student_name ?? null,
-          student_email: data.student_email ?? null,
+          student_name: data.student_name,
+          student_email: data.student_email,
         })
         .select("id, started_at")
         .single();
@@ -75,7 +65,6 @@ export const startAttempt = createServerFn({ method: "POST" })
         throw new Error("Could not create your test attempt. Please try again.");
       }
 
-      console.info("[start-attempt] created", { attemptId: attempt.id });
       return { id: attempt.id, started_at: attempt.started_at };
     } catch (error) {
       logStartAttemptFailure("handler", error);
@@ -184,7 +173,7 @@ export const submitAttempt = createServerFn({ method: "POST" })
     if (upErr) throw new Error(upErr.message);
     if (!updated) throw new Error("This attempt was already submitted.");
 
-    return { ok: true, obtained, total, correct, wrong, skipped, percentage, accuracy, passed };
+    return { ok: true };
   });
 
 export const getAttemptResult = createServerFn({ method: "GET" })
@@ -195,17 +184,40 @@ export const getAttemptResult = createServerFn({ method: "GET" })
     const { supabaseAdmin: sb } = await import("@/integrations/supabase/client.server");
     const { data: attempt, error } = await sb
       .from("test_attempts")
-      .select("*, test:test_series(id, name, slug, passing_marks, duration_minutes)")
+      .select("id, test_series_id, started_at, submitted_at, duration_seconds, total_marks, obtained_marks, correct_count, wrong_count, skipped_count, percentage, passed, answers, test:test_series(id, name, slug, passing_marks, show_answers_after_submit)")
       .eq("id", data.attempt_id)
       .eq("session_id", data.session_id)
       .single();
     if (error || !attempt) throw new Error(error?.message || "Result not found");
     if (!attempt.submitted_at) throw new Error("This attempt has not been submitted yet.");
+    const test = attempt.test as { show_answers_after_submit?: boolean } | null;
+    const safeAttempt = {
+      id: attempt.id,
+      started_at: attempt.started_at,
+      submitted_at: attempt.submitted_at,
+      duration_seconds: attempt.duration_seconds,
+      total_marks: attempt.total_marks,
+      obtained_marks: attempt.obtained_marks,
+      skipped_count: attempt.skipped_count,
+      attempted_questions: Number(attempt.correct_count ?? 0) + Number(attempt.wrong_count ?? 0),
+      percentage: attempt.percentage,
+      passed: attempt.passed,
+      test: attempt.test,
+    };
+
+    if (!test?.show_answers_after_submit) {
+      return { attempt: safeAttempt, show_answers_after_submit: false };
+    }
+
     const { data: qs, error: questionsError } = await sb
       .from("test_series_questions")
       .select("sort_order, question:questions(id, question_text, options, correct_answer, explanation, marks, negative_marks, difficulty, image_url)")
       .eq("test_series_id", attempt.test_series_id)
       .order("sort_order");
     if (questionsError) throw new Error(questionsError.message);
-    return { attempt, questions: qs ?? [] };
+    return {
+      attempt: safeAttempt,
+      show_answers_after_submit: true,
+      review: { answers: attempt.answers, questions: qs ?? [] },
+    };
   });

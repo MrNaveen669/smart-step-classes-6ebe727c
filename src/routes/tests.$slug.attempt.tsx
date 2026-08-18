@@ -81,29 +81,29 @@ function AttemptPage() {
   return (
     <div className="min-h-screen">
       <header className="glass sticky top-0 z-30 border-b border-white/5">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
-          <div><div className="font-semibold">{test.name}</div><div className="text-xs text-muted-foreground">Question {idx + 1} of {questions.length}</div></div>
-          <div className={`flex items-center gap-2 rounded-lg border border-white/10 px-3 py-1.5 font-mono text-lg ${lowTime ? "border-destructive/50 text-destructive shadow-glow" : ""}`}>
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-2 px-3 py-3 sm:px-4">
+          <div className="min-w-0 flex-1 basis-44"><div className="truncate font-semibold">{test.name}</div><div className="text-xs text-muted-foreground">Question {idx + 1} of {questions.length}</div></div>
+          <div className={`flex shrink-0 items-center gap-2 rounded-lg border border-white/10 px-3 py-1.5 font-mono text-base sm:text-lg ${lowTime ? "border-destructive/50 text-destructive shadow-glow" : ""}`}>
             <Timer className="h-4 w-4" />{mm}:{ss}
           </div>
-          <Button onClick={() => setConfirmOpen(true)} className="bg-gradient-primary text-primary-foreground shadow-glow"><Send className="mr-2 h-4 w-4" />Submit</Button>
+          <Button onClick={() => setConfirmOpen(true)} className="shrink-0 bg-gradient-primary text-primary-foreground shadow-glow"><Send className="mr-1 h-4 w-4 sm:mr-2" />Submit</Button>
         </div>
       </header>
-      <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 lg:grid-cols-[1fr_280px]">
-        <div>
-          <Card className="glass p-6">
+      <div className="mx-auto grid max-w-7xl gap-4 px-3 py-4 sm:gap-6 sm:px-4 sm:py-6 lg:grid-cols-[minmax(0,1fr)_280px]">
+        <div className="min-w-0">
+          <Card className="glass min-w-0 p-4 sm:p-6">
             <div className="mb-4 flex items-center gap-2">
               <Badge variant="outline">Q{idx + 1}</Badge>
               <Badge variant="secondary">{Number(current.marks)} mark{Number(current.marks) === 1 ? "" : "s"}</Badge>
               {test.negative_marking && <Badge variant="destructive">-{test.negative_mark_value}</Badge>}
             </div>
-            <p className="whitespace-pre-wrap text-lg leading-relaxed">{current.question_text}</p>
+            <p className="whitespace-pre-wrap break-words text-base leading-relaxed sm:text-lg">{current.question_text}</p>
             <div className="mt-6 space-y-2">
               {type === "single_correct" || type === "true_false" || type === "image_based" ? (
                 opts.map((o) => (
-                  <label key={o} className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition ${val === o ? "border-primary bg-primary/10" : "border-white/10 hover:border-white/20 hover:bg-white/5"}`}>
+                  <label key={o} className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition ${val === o ? "border-primary bg-primary/10" : "border-white/10 hover:border-white/20 hover:bg-white/5"}`}>
                     <input type="radio" name="q" checked={val === o} onChange={() => setAns(o)} className="h-4 w-4 accent-primary" />
-                    <span>{o}</span>
+                    <span className="min-w-0 break-words">{o}</span>
                   </label>
                 ))
               ) : type === "multiple_correct" ? (
@@ -111,9 +111,9 @@ function AttemptPage() {
                   const arr: string[] = Array.isArray(val) ? val : [];
                   const on = arr.includes(o);
                   return (
-                    <label key={o} className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition ${on ? "border-primary bg-primary/10" : "border-white/10 hover:border-white/20 hover:bg-white/5"}`}>
+                    <label key={o} className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition ${on ? "border-primary bg-primary/10" : "border-white/10 hover:border-white/20 hover:bg-white/5"}`}>
                       <input type="checkbox" checked={on} onChange={(e) => setAns(e.target.checked ? [...arr, o] : arr.filter((x) => x !== o))} className="h-4 w-4 accent-primary" />
-                      <span>{o}</span>
+                      <span className="min-w-0 break-words">{o}</span>
                     </label>
                   );
                 })
@@ -121,20 +121,20 @@ function AttemptPage() {
                 <Input value={val ?? ""} onChange={(e) => setAns(e.target.value)} placeholder="Type your answer" />
               )}
             </div>
-            <div className="mt-6 flex flex-wrap items-center justify-between gap-2">
-              <Button variant="outline" onClick={toggleFlag}><Flag className={`mr-2 h-4 w-4 ${flagged.has(current.id) ? "fill-yellow-400 text-yellow-400" : ""}`} />{flagged.has(current.id) ? "Unmark" : "Mark for review"}</Button>
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setAns(null)}>Clear</Button>
-                <Button variant="outline" disabled={idx === 0} onClick={() => setIdx(idx - 1)}><ChevronLeft className="mr-1 h-4 w-4" />Previous</Button>
-                <Button disabled={idx === questions.length - 1} onClick={() => setIdx(idx + 1)}>Next<ChevronRight className="ml-1 h-4 w-4" /></Button>
+            <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <Button variant="outline" onClick={toggleFlag} className="w-full sm:w-auto"><Flag className={`mr-2 h-4 w-4 ${flagged.has(current.id) ? "fill-yellow-400 text-yellow-400" : ""}`} />{flagged.has(current.id) ? "Unmark" : "Mark for review"}</Button>
+              <div className="grid grid-cols-3 gap-2 sm:flex">
+                <Button variant="outline" onClick={() => setAns(null)} className="w-full">Clear</Button>
+                <Button variant="outline" disabled={idx === 0} onClick={() => setIdx(idx - 1)} className="w-full px-2 sm:px-3"><ChevronLeft className="mr-1 h-4 w-4" /><span className="hidden sm:inline">Previous</span></Button>
+                <Button disabled={idx === questions.length - 1} onClick={() => setIdx(idx + 1)} className="w-full px-2 sm:px-3"><span className="hidden sm:inline">Next</span><ChevronRight className="sm:ml-1 h-4 w-4" /></Button>
               </div>
             </div>
           </Card>
         </div>
-        <aside>
-          <Card className="glass sticky top-24 p-4">
+        <aside className="min-w-0">
+          <Card className="glass p-4 lg:sticky lg:top-24">
             <div className="mb-3 text-sm font-semibold">Palette</div>
-            <div className="grid grid-cols-5 gap-2">
+            <div className="grid grid-cols-5 gap-2 sm:grid-cols-8 lg:grid-cols-5">
               {questions.map((q: any, i: number) => {
                 const id = q.question.id;
                 const isAnswered = answers[id] != null && answers[id] !== "" && !(Array.isArray(answers[id]) && answers[id].length === 0);
@@ -166,9 +166,9 @@ function AttemptPage() {
             <div className="flex justify-between"><span>Flagged for review</span><span className="font-semibold">{flagged.size}</span></div>
             <div className="flex justify-between"><span>Unanswered</span><span className="font-semibold text-red-400">{questions.length - answered}</span></div>
           </div>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setConfirmOpen(false)}>Keep going</Button>
-            <Button disabled={submitting} onClick={doSubmit}>{submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Submit final</Button>
+          <DialogFooter className="flex-col gap-2 sm:flex-row">
+            <Button variant="ghost" onClick={() => setConfirmOpen(false)} className="w-full sm:w-auto">Keep going</Button>
+            <Button disabled={submitting} onClick={doSubmit} className="w-full sm:w-auto">{submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Submit final</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

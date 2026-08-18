@@ -385,6 +385,7 @@ export type Database = {
           random_questions: boolean
           shuffle_options: boolean
           shuffle_questions: boolean
+          show_answers_after_submit: boolean
           slug: string
           status: Database["public"]["Enums"]["publish_status"]
           subject_id: string | null
@@ -411,6 +412,7 @@ export type Database = {
           random_questions?: boolean
           shuffle_options?: boolean
           shuffle_questions?: boolean
+          show_answers_after_submit?: boolean
           slug: string
           status?: Database["public"]["Enums"]["publish_status"]
           subject_id?: string | null
@@ -437,6 +439,7 @@ export type Database = {
           random_questions?: boolean
           shuffle_options?: boolean
           shuffle_questions?: boolean
+          show_answers_after_submit?: boolean
           slug?: string
           status?: Database["public"]["Enums"]["publish_status"]
           subject_id?: string | null
